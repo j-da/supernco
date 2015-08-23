@@ -1,1 +1,1 @@
-web: coffee app.coffee
+web: iced app.coffee
