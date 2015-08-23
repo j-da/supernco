@@ -1,6 +1,6 @@
 hapi = require('hapi').Server
 https = require 'https'
-neo = require('neo4j').GraphDatabase process.env.GRAPHSTORY_URL
+neo = require('neo4j').GraphDatabase process.env.NEO_URL
 
 dateFormat = new Intl.DateTimeFormat 'en-GB'
 
@@ -28,6 +28,8 @@ hapi.route
   method: 'POST'
   path: '/slack/points'
   handler: (req, reply) ->
+    console.log "POINTS received #{JSON.stringify req.payload}"
+
     if req.payload.token is process.env.SLACK_HOOK_TOKEN
       # give name... score for activity
       if query = /^give ([a-z][a-z ]+(?:, ?[a-z][a-z ]+)*) (\d+) for (\w[\w ]+)/i.exec req.payload.text
@@ -68,6 +70,7 @@ hapi.route
         missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
         if missing then builder += ", but I don't know who **#{missing}** are"
 
+        console.log "POINTS::give1 REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
 
       # give name, score ... for activity
@@ -111,6 +114,7 @@ hapi.route
         missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
         if missing then builder += ", but I don't know who **#{missing}** are"
 
+        console.log "POINTS::give2 REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
 
       # leaderboard [for group]
@@ -143,6 +147,7 @@ hapi.route
                     result.reduce ((p, c, i, a) -> if p is '' then "**c.person** (#{(c.group + ', ') if c.group}#{c.score})"
                                                               else ', ' + "**c.person** (#{'left, ' if c.inactive}#{(c.group + ', ') if c.group}#{c.score})"), ''
 
+        console.log "POINTS::leaderboard REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
 
       # list for name|group|activity|author|date...
@@ -182,6 +187,7 @@ hapi.route
           builder = "<#{req.payload.user_id}>, I've fetched a list for #{query[1]} for you: " +
                     result.reduce ((p, c, i, a) -> "\n**#{c.person}** (#{c.group}) did **#{c.activity}** for **#{c.score}** on #{c.date} (#{c.author}#{(' & ' + verify) if verify}#{(', needs verification from ' + assigned) if assigned})"), ''
 
+        console.log "POINTS::list REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
 
       # reset
@@ -206,12 +212,19 @@ hapi.route
         else
             builder = "<#{req.payload.user_id}>, it looks like you can't instigate a reset."
 
-        reply({text: builder}).code(200)        
+        console.log "POINTS::reset REPLYING #{builder}"
+        reply({text: builder}).code(200)
+      else
+        console.log "POINTS::null NO REPLY"
+    else
+      console.log "POINTS::null BAD_TOKEN"
 
 hapi.route
   method: 'POST',
   path: '/slack/whois',
   handler: (req, reply) ->
+    console.log "WHOIS received #{JSON.stringify req.payload}"
+
     if req.payload.token is process.env.SLACK_HOOK_TOKEN
       # add name... to group
       if query = /^add ([a-z][a-z ]+(?:, ?[a-z][a-z ]+)*) to ([a-z][a-z]+)/i.exec req.payload.text
@@ -240,6 +253,7 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, it looks like you can't instigate an addition"
 
+        console.log "WHOIS::add REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
 
       # move name... to group
@@ -274,6 +288,7 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, it looks like you can't instigate a move"
 
+        console.log "WHOIS::move REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
 
       # name... left
@@ -308,6 +323,7 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, it looks like you can't instigate an update"
 
+        console.log "WHOIS::left REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
 
       # who is in group
@@ -324,6 +340,7 @@ hapi.route
           people = results.reduce ((p, c, i, a) -> if p is '' then "**#{c}**" else if i is a.length - 1 then "#{p} and **#{c}**" else "#{p}, **#{c}**"), ''
           builder = "<#{req.payload.user_id}>, #{people} are in #{query[1].trim().toLowerCase()}."
 
+        console.log "WHOIS::in REPLYING #{builder}"
         reply({text: builder}).code(200)
 
       # who is name
@@ -342,12 +359,19 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, **#{query[1].trim().toLowerCase()}** was not found"
 
+        console.log "WHOIS::whois REPLYING #{builder}"
         reply({text: builder}).code(200)
+      else
+        console.log "WHOIS::null NO REPLY"
+    else
+      console.log "WHOIS::null BAD_TOKEN"
 
 hapi.route
   method: 'POST',
   path: '/slack/reportbook',
   handler: (req, reply) ->
+    console.log "REPORTBOOK received #{JSON.stringify req.payload}"
+
     if req.payload.token is process.env.SLACK_HOOK_TOKEN
       # list assigned
       if req.payload.text.toLowerCase() is 'list assigned'
@@ -367,6 +391,7 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, you have no assignments."
 
+        console.log "REPORTBOOK::assigned REPLYING #{builder}"
         reply({text: builder}).code(200)
 
       # list for person|group
@@ -391,6 +416,7 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, there are no reports for #{query[1].trim().toLowerCase()}"
 
+        console.log "REPORTBOOK::list REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
 
       # authorise id
@@ -421,6 +447,7 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, it looks like you can't verify reports."
 
+        console.log "REPORTBOOK::auth REPLYING #{builder}"
         reply({text: builder}).code(200)
 
       else if query = /^delete ([0-9]+)/i.exec req.payload.text
@@ -451,6 +478,7 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, it looks like you can't delete reports."
 
+        console.log "REPORTBOOK::delete REPLYING #{builder}"
         reply({text: builder}).code(200)
 
       # snco, name did action
@@ -490,6 +518,11 @@ hapi.route
         else
           builder = "<#{req.payload.user_id}>, your report for #{person} does not appear to have been created."
 
+        console.log "REPORTBOOK::do REPLYING #{builder}"
         reply({text: builder}).code(200)
+      else
+        console.log "REPORTBOOK::null NO REPLY"
+    else
+      console.log "REPORTBOOK::null BAD_TOKEN"
 
 hapi.start()
