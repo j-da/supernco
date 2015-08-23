@@ -4,14 +4,14 @@
   "description": "Slackbot for 723ncos.slack.com, with a neo4j backend",
   "main": "app.coffee",
   "dependencies": {
-    "coffee-script": "^1.9.3",
     "hapi": "^9.0.3",
+    "iced-coffee-script": "^108.0.7",
     "neo4j": "^2.0.0-RC2"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "coffee app.coffee"
+    "start": "iced app.coffee"
   },
   "keywords": [
     "slack",
@@ -20,5 +20,6 @@
     "neo4j"
   ],
   "author": "James Daly",
-  "license": "MIT"
+  "license": "GNU General Public License v3",
+  "repository": "https://github.com/j-da/supernco"
 }
