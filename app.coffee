@@ -1,6 +1,6 @@
 hapi = require('hapi').Server
 https = require 'https'
-neo = require('neo4j').GraphDatabase process.env.NEO_URL
+neo = require('neo4j').GraphDatabase process.env.GRAPHSTORY_URL
 
 dateFormat = new Intl.DateTimeFormat 'en-GB'
 
