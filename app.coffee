@@ -4,7 +4,7 @@ neo = require('neo4j').GraphDatabase process.env.GRAPHSTORY_URL
 
 dateFormat = new Intl.DateTimeFormat 'en-GB'
 
-hapi.connection port: process.env.port || 3000
+hapi.connection port: process.env.PORT || 3000
 
 authenticateAdmin = (userID, cb) ->
   query2 = "token=#{process.env.SLACK_API_TOKEN}&user=#{req.payload.user_id}"
