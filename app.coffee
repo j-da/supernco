@@ -565,10 +565,15 @@ hapi.register require('inert'), (e) ->
                                       RETURN group, score
                                       ORDER BY score DESC
                                 ''', defer error, result
+        if error
+          console.log 'WEB::dberror ' + error
+        
         if result
           for r, i in result
             r2 = (Math.random() * 96 + 128).toString 16
             result[i].color = '#' + r2 + r2 + r2
+        
+        console.log 'WEB returning ' + result
         reply.view 'index', error: error?, groups: result
 
     hapi.route
