@@ -527,7 +527,7 @@ hapi.route
     else
       console.log "REPORTBOOK::null BAD_TOKEN"
 
-server.views({
+hapi.views({
     engines: {
         html: require('handlebars')
     },
