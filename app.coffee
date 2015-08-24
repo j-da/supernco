@@ -1,6 +1,6 @@
-hapi = new (require('hapi')).Server()
+hapi = new (require 'hapi').Server()
 https = require 'https'
-neo = new (require('neo4j')).GraphDatabase process.env.GRAPHSTORY_URL
+neo = new (require 'neo4j').GraphDatabase process.env.GRAPHSTORY_URL
 
 dateFormat = new Intl.DateTimeFormat 'en-GB'
 
@@ -540,33 +540,44 @@ hapi.route
     else
       console.log "REPORTBOOK::null BAD_TOKEN"
 
-hapi.register require('vision'), (e) ->
+hapi.register require('inert'), (e) ->
   if e then console.log 'WEB::error' + e
-  
-  hapi.views({
-      engines: {
-          html: require('handlebars')
-      },
-      path: __dirname + '/views'
-  });
-  
-  hapi.route
-    method: 'GET',
-    path: '/',
-    handler: (req, reply) ->
-      await neo.cypher query: '''
-                              MATCH (g:Group)
-                                    OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
-                                    LIMIT 10
-                                    WITH g.name AS group, sum(e.score) AS score
-                                    RETURN group, score
-                                    ORDER BY score DESC
-                              ''', defer error, result
-      if result
-        for r, i in result
-          r2 = (Math.random() * 96 + 128).toString 16
-          r.color = '#' + r2 + r2 + r2
-      reply.view 'index', error: error?, groups: result
+
+  hapi.register require('vision'), (e2) ->
+    if e then console.log 'WEB::error' + e2
+    
+    hapi.views({
+        engines: {
+            html: require('handlebars')
+        },
+        path: __dirname + '/views'
+    });
+    
+    hapi.route
+      method: 'GET',
+      path: '/',
+      handler: (req, reply) ->
+        await neo.cypher query: '''
+                                MATCH (g:Group)
+                                      OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
+                                      LIMIT 10
+                                      WITH g.name AS group, sum(e.score) AS score
+                                      RETURN group, score
+                                      ORDER BY score DESC
+                                ''', defer error, result
+        if result
+          for r, i in result
+            r2 = (Math.random() * 96 + 128).toString 16
+            result[i].color = '#' + r2 + r2 + r2
+        reply.view 'index', error: error?, groups: result
+
+    hapi.route
+      method: 'GET',
+      path: '/assets/{param*}',
+      handler:
+        directory:
+          path: __dirname + '/assets'
+          index: false
 
 hapi.start ->
   console.log "SUPERNCO::start"

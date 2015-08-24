@@ -7,6 +7,7 @@
     "handlebars": "^3.0.3",
     "hapi": "^9.0.3",
     "iced-coffee-script": "^108.0.7",
+    "inert": "^3.0.1",
     "neo4j": "^2.0.0-RC2",
     "vision": "^3.0.0"
   },
