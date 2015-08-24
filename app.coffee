@@ -542,7 +542,6 @@ hapi.route
 
 hapi.register require('inert'), (e) ->
   if e then console.log 'WEB::error' + e
-<<<<<<< HEAD
 
   hapi.register require('vision'), (e2) ->
     if e then console.log 'WEB::error' + e2
@@ -579,7 +578,6 @@ hapi.register require('inert'), (e) ->
         directory:
           path: __dirname + '/assets'
           index: false
-=======
   
   hapi.views({
       engines: {
@@ -605,7 +603,6 @@ hapi.register require('inert'), (e) ->
           r2 = (Math.random() * 96 + 128).toString 16
           result[i].color = '#' + r2 + r2 + r2
       reply.view 'index', error: error?, groups: result
->>>>>>> 3fe8fc3a5743b576b934581fc146d240f1dc94ca
 
 hapi.start ->
   console.log "SUPERNCO::start"
