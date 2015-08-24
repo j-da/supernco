@@ -565,7 +565,7 @@ hapi.register require('vision'), (e) ->
       if result
         for r, i in result
           r2 = (Math.random() * 96 + 128).toString 16
-          r.color = '#' + r2 + r2 + r2
+          result[i].color = '#' + r2 + r2 + r2
       reply.view 'index', error: error?, groups: result
 
 hapi.start ->
