@@ -571,38 +571,5 @@ hapi.register require('inert'), (e) ->
             result[i].color = '#' + r2 + r2 + r2
         reply.view 'index', error: error?, groups: result
 
-    hapi.route
-      method: 'GET',
-      path: '/assets/{param*}',
-      handler:
-        directory:
-          path: __dirname + '/assets'
-          index: false
-  
-  hapi.views({
-      engines: {
-          html: require('handlebars')
-      },
-      path: __dirname + '/views'
-  });
-  
-  hapi.route
-    method: 'GET',
-    path: '/',
-    handler: (req, reply) ->
-      await neo.cypher query: '''
-                              MATCH (g:Group)
-                                    OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
-                                    LIMIT 10
-                                    WITH g.name AS group, sum(e.score) AS score
-                                    RETURN group, score
-                                    ORDER BY score DESC
-                              ''', defer error, result
-      if result
-        for r, i in result
-          r2 = (Math.random() * 96 + 128).toString 16
-          result[i].color = '#' + r2 + r2 + r2
-      reply.view 'index', error: error?, groups: result
-
 hapi.start ->
   console.log "SUPERNCO::start"
