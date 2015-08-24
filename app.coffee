@@ -527,4 +527,5 @@ hapi.route
     else
       console.log "REPORTBOOK::null BAD_TOKEN"
 
-hapi.start()
+hapi.start ->
+  console.log "SUPERNCO::start"
