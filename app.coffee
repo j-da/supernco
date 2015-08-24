@@ -547,10 +547,10 @@ hapi.register require('inert'), (e) ->
     if e then console.log 'WEB::error' + e2
     
     hapi.views({
-        engines: {
-            html: require('handlebars')
-        },
-        path: __dirname + '/views'
+      engines: {
+          html: require('handlebars')
+      },
+      path: __dirname + '/views'
     });
     
     hapi.route
@@ -570,6 +570,14 @@ hapi.register require('inert'), (e) ->
             r2 = (Math.random() * 96 + 128).toString 16
             result[i].color = '#' + r2 + r2 + r2
         reply.view 'index', error: error?, groups: result
+
+    hapi.route
+      method: 'GET',
+      path: '/assets/{param*}',
+      handler:
+        directory:
+          path: __dirname + '/assets'
+          index: false
 
 hapi.start ->
   console.log "SUPERNCO::start"
