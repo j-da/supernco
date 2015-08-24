@@ -527,34 +527,34 @@ hapi.route
     else
       console.log "REPORTBOOK::null BAD_TOKEN"
 
-hapi.views({
-    engines: {
-        html: require('handlebars')
-    },
-    relativeTo: __dirname,
-    path: './views',
-    layoutPath: './views/layout',
-    helpersPath: './views/helpers'
-});
-
-hapi.route
-  method: 'GET',
-  path: '/',
-  handler: (req, reply) ->
-    await neo.query '''
-                    MATCH (g:Group)
-                          OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
-                          LIMIT 10
-                          WITH g.name AS group, sum(e.score) AS score
-                          RETURN group, score
-                          ORDER BY score DESC
-                    ''',
-                    defer error, result
-    if result
-      for r, i in result
-        r2 = (Math.random() * 96 + 128).toString 16
-        r.color = '#' + r2 + r2 + r2
-    reply(error: error?, groups: result)
+hapi.register require('vision'), (e) ->
+  if e then console.log 'WEB::error' + e
+  
+  hapi.views({
+      engines: {
+          html: require('handlebars')
+      },
+      path: __dirname + '/views'
+  });
+  
+  hapi.route
+    method: 'GET',
+    path: '/',
+    handler: (req, reply) ->
+      await neo.query '''
+                      MATCH (g:Group)
+                            OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
+                            LIMIT 10
+                            WITH g.name AS group, sum(e.score) AS score
+                            RETURN group, score
+                            ORDER BY score DESC
+                      ''',
+                      defer error, result
+      if result
+        for r, i in result
+          r2 = (Math.random() * 96 + 128).toString 16
+          r.color = '#' + r2 + r2 + r2
+      reply(error: error?, groups: result)
 
 hapi.start ->
   console.log "SUPERNCO::start"
