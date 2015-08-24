@@ -566,7 +566,7 @@ hapi.register require('vision'), (e) ->
         for r, i in result
           r2 = (Math.random() * 96 + 128).toString 16
           r.color = '#' + r2 + r2 + r2
-      reply(error: error?, groups: result)
+      reply.view 'index', error: error?, groups: result
 
 hapi.start ->
   console.log "SUPERNCO::start"
