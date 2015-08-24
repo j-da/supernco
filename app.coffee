@@ -30,7 +30,7 @@ hapi.route
   handler: (req, reply) ->
     console.log "POINTS received #{JSON.stringify req.payload}"
 
-    if req.payload.token is process.env.SLACK_HOOK_TOKEN
+    if req.payload.token is process.env.SLACK_HOOK_TOKEN_POINTS
       # give name... score for activity
       if query = /^give ([a-z][a-z ]+(?:, ?[a-z][a-z ]+)*) (\d+) for (\w[\w ]+)/i.exec req.payload.text
         date = dateFormat.format new Date()
@@ -230,7 +230,7 @@ hapi.route
   handler: (req, reply) ->
     console.log "WHOIS received #{JSON.stringify req.payload}"
 
-    if req.payload.token is process.env.SLACK_HOOK_TOKEN
+    if req.payload.token is process.env.SLACK_HOOK_TOKEN_WHOIS
       # add name... to group
       if query = /^add ([a-z][a-z ]+(?:, ?[a-z][a-z ]+)*) to ([a-z][a-z]+)/i.exec req.payload.text
         await authenticateAdmin req.payload.user_id, defer auth
@@ -382,7 +382,7 @@ hapi.route
   handler: (req, reply) ->
     console.log "REPORTBOOK received #{JSON.stringify req.payload}"
 
-    if req.payload.token is process.env.SLACK_HOOK_TOKEN
+    if req.payload.token is process.env.SLACK_HOOK_TOKEN_REPORTBOOK
       # list assigned
       if req.payload.text.toLowerCase() is 'list assigned'
         await neo.cypher query: '''
