@@ -144,8 +144,10 @@ hapi.route
           builder = "<#{req.payload.user_id}>, there was an error getting a leaderboard for you: #{error}"
         else
           builder = "<#{req.payload.user_id}>, I've fetched the leaderboard #{('for ' + group[0]) if group}> for you: \n" +
-                    result.reduce ((p, c, i, a) -> if p is '' then "**c.person** (#{(c.group + ', ') if c.group}#{c.score})"
-                                                              else ', ' + "**c.person** (#{'left, ' if c.inactive}#{(c.group + ', ') if c.group}#{c.score})"), ''
+                    result.reduce ((p, c, i, a) -> if p is ''
+                                                     "**c.person** (#{(c.group + ', ') if c.group}#{c.score})"
+                                                   else
+                                                     ', ' + "**c.person** (#{'left, ' if c.inactive}#{(c.group + ', ') if c.group}#{c.score})"), ''
 
         console.log "POINTS::leaderboard REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
