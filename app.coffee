@@ -1,4 +1,4 @@
-hapi = require('hapi').Server
+hapi = require('hapi').Server()
 https = require 'https'
 neo = require('neo4j').GraphDatabase process.env.GRAPHSTORY_URL
 
