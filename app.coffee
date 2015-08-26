@@ -196,7 +196,7 @@ hapi.route
         reply({text: builder + '.'}).code(200)
 
       # reset
-      else if query = 'reset'
+      else if req.payload.text is 'reset'
         await authenticateAdmin req.payload.user_id, defer auth
 
         if auth.error
