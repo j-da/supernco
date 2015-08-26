@@ -234,6 +234,9 @@ hapi.route
         else if auth.admin
           people = query[1].split ','
           group = query[2].toLowerCase()
+          errors = []
+          result = []
+          
           await
             for person, i in people
               neo.cypher {query: '''
@@ -264,6 +267,9 @@ hapi.route
         else if auth.admin
           people = query[1].split ','
           group = query[2].toLowerCase()
+          errors = []
+          result = []
+          
           await
             for person, i in people
               neo.cypher {query: '''
@@ -298,6 +304,9 @@ hapi.route
           builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
           people = query[1].split ','
+          errors = []
+          result = []
+          
           await 
             for person, i in people
               neo.cypher {query: '''
