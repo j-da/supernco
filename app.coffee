@@ -47,8 +47,8 @@ hapi.route
                                WHERE ch = 1
                                CREATE (p)-[:Entry {uid: uid,
                                                    score: { score },
-                                                   author: { author }}]-(:Activity {activity: { activity },
-                                                                                   date: { date }})
+                                                   author: { author }}]->(:Activity {activity: { activity },
+                                                                                     date: { date }})
                                RETURN ch
                         ''', params: {
                           activity: query[3].toLowerCase(),
@@ -93,8 +93,8 @@ hapi.route
                                WHERE ch = 1
                                CREATE (p)-[:Entry {uid: uid,
                                                    score: { score },
-                                                   author: { author }}]-(:Activity {activity: { activity },
-                                                                                    date: { date }})
+                                                   author: { author }}]->(:Activity {activity: { activity },
+                                                                                     date: { date }})
                                RETURN ch
                         ''', params: {
                           activity: activity,
@@ -247,7 +247,7 @@ hapi.route
           await
             for person, i in people
               neo.cypher {query: '''
-                                 CREATE (g:Group {name: { group }})--(p:Person {name: { person }, inactive: false})
+                                 CREATE (g:Group {name: { group }})-[:MEMBER]->(p:Person {name: { person }, inactive: false})
                                  RETURN p
                           ''', params: {
                             group: group,
@@ -284,7 +284,7 @@ hapi.route
               neo.cypher {query: '''
                                  MATCH (:Group)-[r]-(p:Person {name: { person }, inactive: false})
                                  DELETE r
-                                 CREATE (:Group {name: { group }})--(p)
+                                 CREATE (:Group {name: { group }})-[:MEMBER]->(p)
                                  RETURN p
                           ''', params: {
                             group: group,
@@ -528,8 +528,8 @@ hapi.route
                                  CREATE (p)-[:Entry:ReportBookEntry {uid: uid,
                                                                      score: -50,
                                                                      author: { author },
-                                                                     assigned: { snco }}]-(:Activity:ReportBook {activity: { activity },
-                                                                                                                date: { date }})
+                                                                     assigned: { snco }}]->(:Activity:ReportBook {activity: { activity },
+                                                                                                                  date: { date }})
                                  RETURN uid
                           ''', params: {
                             person: person,
@@ -601,4 +601,3 @@ hapi.register require('inert'), (e) ->
 
 hapi.start ->
   console.log "SUPERNCO::start"
-
