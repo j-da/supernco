@@ -1,6 +1,6 @@
 hapi = new (require 'hapi').Server()
 https = require 'https'
-neo = new (require 'neo4j').GraphDatabase process.env.GRAPHSTORY_URL
+neo = new (require 'neo4j').GraphDatabase url: process.env.GRAPHSTORY_URL
 
 dateFormat = new Intl.DateTimeFormat 'en-GB'
 
@@ -310,7 +310,7 @@ hapi.route
             for person, i in people
               neo.cypher query: '''
                                 MATCH (p:Person {name: { person }})
-                                WITH 
+                                WITH p, count(*) AS ch
                                 WHERE ch = 1
                                 SET ch.inactive = true
                                 RETURN ch
