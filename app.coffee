@@ -37,7 +37,7 @@ hapi.route
         people = query[1].split(',')
         await
           for person, i in people
-            neo.cypher {query: '''
+            neo.cypher {lean: true, query: '''
                                MERGE (id:UniqueId)
                                ON CREATE SET id.next = 1
                                ON MATCH SET id.next = id.next + 1
@@ -83,7 +83,7 @@ hapi.route
 
         await
           for person, i in query by 2
-            neo.cypher {query: '''
+            neo.cypher {lean: true, query: '''
                                MERGE (id:UniqueId)
                                ON CREATE SET id.next = 1
                                ON MATCH SET id.next = id.next + 1
@@ -121,7 +121,7 @@ hapi.route
       # leaderboard [for group]
       else if 0 is req.payload.text.indexOf 'leaderboard'
         if group = /^leaderboard for ([a-z][a-z ]+)/i.exec req.payload.text
-          await neo.cypher {query: '''
+          await neo.cypher {lean: true, query: '''
                                    MATCH (g:Group {name: { group }})--(p:Person)
                                    OPTIONAL MATCH (p:Person)-[e:Entry]-(:Activity)
                                    WITH p.name AS person, p.inactive AS inactive, g.name AS group, sum(e.score) AS score
@@ -131,7 +131,7 @@ hapi.route
                               group: group[1].toLowerCase()
                            }}, defer error, result
         else
-          await neo.cypher {query: '''
+          await neo.cypher {lean: true, query: '''
                                    MATCH (g:Group)--(p:Person)
                                    OPTIONAL MATCH (p:Person)-[e:Entry]-(:Activity)
                                    LIMIT 10
@@ -157,7 +157,7 @@ hapi.route
       # list for name|group|activity|author|date...
       else if query = /^list for ([a-z][a-z ]+)|([0-3][0-9]-[0-1][0-9]-20[0-9][0-9])/i.exec req.payload.text
         if query[1]
-          await neo.cypher {query: '''
+          await neo.cypher {lean: true, query: '''
                                    MATCH (g:Group {name: { name }})--(p:Person {inactive: false})--[e:Entry]--(a:Activity)
                                    RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
                                           e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
@@ -177,7 +177,7 @@ hapi.route
                               name: query[1].toLowerCase()
                            }}, defer error, result
         else if query[2]
-          await neo.cypher {query: '''
+          await neo.cypher {lean: true, query: '''
                                    MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry]--(a:Activity {date: { date }})
                                    RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
                                           e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
@@ -202,7 +202,7 @@ hapi.route
         if auth.error
           builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}."
         else if auth.admin
-          await neo.cypher {query: '''
+          await neo.cypher {lean: true, query: '''
                                    MATCH ()-[e:Entry]-(a:Activity)
                                    UNION
                                    MATCH (p:Person {inactive: true})
@@ -246,7 +246,7 @@ hapi.route
           
           await
             for person, i in people
-              neo.cypher {query: '''
+              neo.cypher {lean: true, query: '''
                                  CREATE (g:Group {name: { group }})-[:MEMBER]->(p:Person {name: { person }, inactive: false})
                                  RETURN p
                           ''', params: {
@@ -281,7 +281,7 @@ hapi.route
           
           await
             for person, i in people
-              neo.cypher {query: '''
+              neo.cypher {lean: true, query: '''
                                  MATCH (:Group)-[r]-(p:Person {name: { person }, inactive: false})
                                  DELETE r
                                  CREATE (:Group {name: { group }})-[:MEMBER]->(p)
@@ -320,7 +320,7 @@ hapi.route
           
           await 
             for person, i in people
-              neo.cypher {query: '''
+              neo.cypher {lean: true, query: '''
                                  MATCH (p:Person {name: { person }})
                                  WITH p, count(*) AS ch
                                  WHERE ch = 1
@@ -349,7 +349,7 @@ hapi.route
 
       # who is in group
       else if query = /^who is in ([a-z][a-z]+)/i.exec(req.payload.text) or query = /list ([a-z][a-z]+)/i.exec req.payload.text
-        await neo.cypher {query: '''
+        await neo.cypher {lean: true, query: '''
                                  MATCH (g:Group {name: { group }})--(p:Person)
                                  RETURN p
                           ''', params: {
@@ -368,7 +368,7 @@ hapi.route
       # who is name
       else if query = /^who is ([a-z][a-z ]+)/i.exec req.payload.text
         console.log "DEBUG::query #{query}"
-        await neo.cypher {query: '''
+        await neo.cypher {lean: true, query: '''
                                  MATCH (g:Group)--(p:Person {name: { name }})
                                  RETURN p, g.name AS g2
                           ''', params: {
@@ -399,7 +399,7 @@ hapi.route
     if req.payload.token is process.env.SLACK_HOOK_TOKEN_REPORTBOOK
       # list assigned
       if req.payload.text.toLowerCase() is 'list assigned'
-        await neo.cypher {query: '''
+        await neo.cypher {lean: true, query: '''
                                  MATCH (g:Group)--(p:Person)-[e:Entry:ReportBookEntry {assigned: { u }}]-(a:Activity:ReportBook)
                                  RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
@@ -421,7 +421,7 @@ hapi.route
 
       # list for person|group
       else if query = /^list for ([a-z][a-z ]+)/i.exec req.payload.text
-        await neo.cypher {query: '''
+        await neo.cypher {lean: true, query: '''
                                  MATCH (g:Group)--(p:Person {name: { name }})-[e:Entry:ReportBookEntry]-(a:Activity:ReportBook)
                                  RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
@@ -452,7 +452,7 @@ hapi.route
         if auth.error
           builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
-          await neo.cypher {query: '''
+          await neo.cypher {lean: true, query: '''
                                    MATCH (p:Person)-[e:Entry:ReportBookEntry {uid: { uid }}]-(a:Activity)
                                    WHERE HAS (e.assigned)
                                    SET e.verification = { u }
@@ -483,7 +483,7 @@ hapi.route
         if auth.error
           builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
-          await neo.cypher {query: '''
+          await neo.cypher {lean: true, query: '''
                                    MATCH ()-[e:Entry:ReportBookEntry {uid: { uid }}]-()
                                    DELETE e
 
@@ -517,7 +517,7 @@ hapi.route
         person = query[1]
         activity = query[2]
 
-        await neo.cypher {query: '''
+        await neo.cypher {lean: true, query: '''
                                  MERGE (id:UniqueId)
                                  ON CREATE SET id.next = 1
                                  ON MATCH SET id.next = id.next + 1
@@ -571,7 +571,7 @@ hapi.register require('inert'), (e) ->
       method: 'GET',
       path: '/',
       handler: (req, reply) ->
-        await neo.cypher {query: '''
+        await neo.cypher {lean: true, query: '''
                                  MATCH (g:Group)
                                  OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
                                  WITH g.name AS group, sum(e.score) AS score
