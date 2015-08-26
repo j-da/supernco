@@ -9,9 +9,10 @@ hapi.connection port: process.env.PORT || 3000
 authenticateAdmin = (userID, cb) ->
   query2 = {token: process.env.SLACK_API_TOKEN, user: userID}
   valid = request {method: 'POST', url: 'https://slack.com/api/users.info', json: query2}, (err, res, body) ->
+    console.log "AUTH::request #{userID} returned #{body}"
     if err or res.statusCode isnt 200
       cb error: r2.error
-    else if body.user.is_admin
+    else if body.user and body.user.is_admin
       cb admin: true
     else
       cb admin: false
