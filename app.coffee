@@ -203,10 +203,8 @@ hapi.route
           builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}."
         else if auth.admin
           await neo.cypher {lean: true, query: '''
-                                   MATCH ()-[e:Entry]-(a:Activity)
-                                   DELETE e, a
-                                   MATCH (p:Person {inactive: true})
-                                   DELETE p
+                                   MATCH ()-[e:Entry]-(a:Activity), (p:Person {inactive: true})
+                                   DELETE p, e, a
                             '''
                            }, defer error, result
 
@@ -485,12 +483,9 @@ hapi.route
           builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
           await neo.cypher {lean: true, query: '''
-                                   MATCH ()-[e:Entry:ReportBookEntry {uid: { uid }}]-()
-                                   DELETE e
-
-                                   MATCH (a:Activity)
+                                   MATCH ()-[e:Entry:ReportBookEntry {uid: { uid }}]-(), (a:Activity)
                                    WHERE NOT (a)-[:Entry]-()
-                                   DELETE a
+                                   DELETE e, a
                             ''', params: {
                               u: req.payload.user_id,
                               uid: query[1]
