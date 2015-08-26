@@ -465,7 +465,7 @@ hapi.route
 
           if error
             builder = "<@#{req.payload.user_name}>, there was an error verifying report #{query[1]}: #{error}."
-          console.log 'REPORTBOOK::auth::error ' + error
+            console.log 'REPORTBOOK::auth::error ' + error
           else if result.uid2
             builder = "<@#{req.payload.user_name}>, you have verified report #{result.uid2}."
           else
@@ -497,7 +497,7 @@ hapi.route
 
           if error
             builder = "<@#{req.payload.user_name}>, there was an error deleting report #{query[1]}: #{error}."
-          console.log 'REPORTBOOK::delete::error ' + error
+            console.log 'REPORTBOOK::delete::error ' + error
           else if result.uid2
             builder = "<@#{req.payload.user_name}>, you have deleted report #{result.uid2}."
           else
