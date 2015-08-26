@@ -59,7 +59,7 @@ hapi.route
                        }}, defer errors[i], result[i]
 
         builder = "<@#{req.payload.user_name}>, I've added #{activity} for you. "
-        builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records added"
+        builder += "*#{result.reduce ((p, c, i, a) -> p + c.ch), 0}* records added"
         
         erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
         if erroneous
@@ -105,7 +105,7 @@ hapi.route
                        }}, defer errors[i/2], result[i/2]
 
         builder = "<@#{req.payload.user_name}>, I've added #{activity} for you. "
-        builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records added"
+        builder += "*#{result.reduce ((p, c, i, a) -> p + c.ch), 0}* records added"
         
         erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
         if erroneous
@@ -255,7 +255,7 @@ hapi.route
                          }}, defer errors[i], result[i]
 
           builder = "<@#{req.payload.user_name}>, I've added people to #{group} for you. "
-          builder += "*#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}* records added"
+          builder += "*#{result.reduce ((p, c, i, a) -> p + (if c.p then 1 else 0)), 0}* records added"
           
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
           if erroneous
@@ -292,7 +292,7 @@ hapi.route
                          }}, defer errors[i], result[i]
 
           builder = "<@#{req.payload.user_name}>, I've moved people to #{group} for you. "
-          builder += "*#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}* records changed"
+          builder += "*#{result.reduce ((p, c, i, a) -> p + (if c.p then 1 else 0)), 0}* records changed"
           
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
           if erroneous
@@ -331,7 +331,7 @@ hapi.route
                          }}, defer errors[i], result[i]
 
           builder = "<@#{req.payload.user_name}>, I've completed that update for you. "
-          builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records changed"
+          builder += "*#{result.reduce ((p, c, i, a) -> p + c.ch), 0}* records changed"
             
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
           if erroneous
