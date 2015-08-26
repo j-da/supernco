@@ -8,16 +8,13 @@ hapi.connection port: process.env.PORT || 3000
 
 authenticateAdmin = (userID, cb) ->
   query2 = {token: process.env.SLACK_API_TOKEN, user: userID}
-  valid = request {method: 'POST', url: 'https://slack.com/api/users.info', json: query2}, (res) ->
-    res.setEncoding 'utf-8'
-    res.on 'data', (r2) ->
-      r2 = JSON.parse r2
-      if not r2.ok
-        cb error: r2.error
-      else if r2.user.is_admin
-        cb admin: true
-      else
-        cb admin: false
+  valid = request {method: 'POST', url: 'https://slack.com/api/users.info', json: query2}, (err, res, body) ->
+    if err or res.statusCode isnt 200
+      cb error: r2.error
+    else if body.user.is_admin
+      cb admin: true
+    else
+      cb admin: false
 
 hapi.route
   method: 'POST'
