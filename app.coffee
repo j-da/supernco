@@ -67,7 +67,7 @@ hapi.route
           console.log 'POINTS::give1::error ' + errors.join '\n'
 
         missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
-        if missing then builder += ", but I don't know who *#{missing}* are"
+        if missing then builder += ", but I don't know who *#{missing}* #{if missing.indexOf(', ') is -1 then 'is' else 'are'}"
 
         console.log "POINTS::give1 REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -113,7 +113,7 @@ hapi.route
           console.log 'POINTS::give2::error ' + errors.join '\n'
 
         missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
-        if missing then builder += ", but I don't know who *#{missing}* are"
+        if missing then builder += ", but I don't know who *#{missing}* #{if missing.indexOf(', ') is -1 then 'is' else 'are'}"
 
         console.log "POINTS::give2 REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -248,14 +248,14 @@ hapi.route
             for person, i in people
               neo.cypher {lean: true, query: '''
                                  CREATE (g:Group {name: { group }})-[:MEMBER]->(p:Person {name: { person }, inactive: false})
-                                 RETURN p.name AS p
+                                 RETURN p.name AS p2
                           ''', params: {
                             group: group,
                             person: person.trim().toLowerCase()
                          }}, defer errors[i], result[i]
 
           builder = "<@#{req.payload.user_name}>, I've added people to #{group} for you. "
-          builder += "*#{result.reduce ((p, c, i, a) -> p + (if c.p then 1 else 0)), 0}* records added"
+          builder += "*#{result.reduce ((p, c, i, a) -> p + (if c.p2 then 1 else 0)), 0}* records added"
           
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
           if erroneous
@@ -285,22 +285,22 @@ hapi.route
                                  MATCH (:Group)-[r]-(p:Person {name: { person }, inactive: false})
                                  DELETE r
                                  CREATE (:Group {name: { group }})-[:MEMBER]->(p)
-                                 RETURN p.name AS p
+                                 RETURN p.name AS p2
                           ''', params: {
                             group: group,
                             person: person.trim().toLowerCase()
                          }}, defer errors[i], result[i]
 
           builder = "<@#{req.payload.user_name}>, I've moved people to #{group} for you. "
-          builder += "*#{result.reduce ((p, c, i, a) -> p + (if c.p then 1 else 0)), 0}* records changed"
+          builder += "*#{result.reduce ((p, c, i, a) -> p + (if c.p2 then 1 else 0)), 0}* records changed"
           
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
           if erroneous
             builder += " although there were errors moving *#{erroneous}*"
             console.log 'WHOIS::move::error ' + errors.join '\n'
 
-          missing = result.reduce ((p, c, i, a) -> if not c.p then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if missing then builder += ", but I don't know who *#{missing}* are"
+          missing = result.reduce ((p, c, i, a) -> if not c.p2 then (if p is '' then people[i] else p + ", #{people[i]}")), ''
+          if missing then builder += ", but I don't know who *#{missing}* #{if missing.indexOf(', ') is -1 then 'is' else 'are'}"
         else
           builder = "<@#{req.payload.user_name}>, it looks like you can't instigate a move"
 
@@ -339,7 +339,7 @@ hapi.route
             console.log 'WHOIS::left::error ' + errors.join '\n'
 
           missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if missing then builder += ", but I don't know who *#{missing}* are"
+          if missing then builder += ", but I don't know who *#{missing}* #{if missing.indexOf(', ') is -1 then 'is' else 'are'}"
 
         else
           builder = "<@#{req.payload.user_name}>, it looks like you can't instigate an update"
@@ -351,7 +351,7 @@ hapi.route
       else if query = /^who is in ([a-z][a-z]+)/i.exec(req.payload.text) or query = /list ([a-z][a-z]+)/i.exec req.payload.text
         await neo.cypher {lean: true, query: '''
                                  MATCH (g:Group {name: { group }})--(p:Person)
-                                 RETURN p.name AS p
+                                 RETURN p.name AS p2
                           ''', params: {
                             group: query[1].trim().toLowerCase()
                          }}, defer error, result
@@ -359,8 +359,8 @@ hapi.route
           builder = "<@#{req.payload.user_name}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
           console.log 'WHOIS::in::error ' + error
         else
-          people = result.reduce ((p, c, i, a) -> if p is '' then "*#{c.p}*" else if i is a.length - 1 then "#{p} and *#{c.p}*" else "#{p}, *#{c.p}*"), ''
-          builder = "<@#{req.payload.user_name}>, #{people} are in #{query[1].trim().toLowerCase()}."
+          people = result.reduce ((p, c, i, a) -> if p is '' then "*#{c.p2}*" else if i is a.length - 1 then "#{p} and *#{c.p2}*" else "#{p}, *#{c.p2}*"), ''
+          builder = "<@#{req.payload.user_name}>, #{people} #{if result.length is 1 then 'is' else 'are'} in #{query[1].trim().toLowerCase()}."
 
         console.log "WHOIS::in REPLYING #{builder}"
         reply({text: builder}).code(200)
@@ -477,6 +477,7 @@ hapi.route
         console.log "REPORTBOOK::auth REPLYING #{builder}"
         reply({text: builder}).code(200)
 
+      # delete
       else if query = /^delete ([0-9]+)/i.exec req.payload.text
         await authenticateAdmin req.payload.user_id, defer auth
 
