@@ -1,5 +1,5 @@
 hapi = new (require 'hapi').Server()
-https = require 'https'
+request = require('request')
 neo = new (require 'neo4j').GraphDatabase url: process.env.GRAPHSTORY_URL
 
 dateFormat = new Intl.DateTimeFormat 'en-GB'
@@ -7,8 +7,8 @@ dateFormat = new Intl.DateTimeFormat 'en-GB'
 hapi.connection port: process.env.PORT || 3000
 
 authenticateAdmin = (userID, cb) ->
-  query2 = "token=#{process.env.SLACK_API_TOKEN}&user=#{userID}"
-  valid = https.request {method: 'POST', port: 443, hostname: 'slack.com', path: '/api/users.info', headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': query2.length}}, (res) ->
+  query2 = {token: process.env.SLACK_API_TOKEN, user: userID}
+  valid = request method: 'POST', url: 'https://slack.com/api/users.info', json: query2}, (res) ->
     res.setEncoding 'utf-8'
     res.on 'data', (r2) ->
       r2 = JSON.parse r2
@@ -18,9 +18,6 @@ authenticateAdmin = (userID, cb) ->
         cb admin: true
       else
         cb admin: false
-
-  valid.write query2
-  valid.end()
 
 hapi.route
   method: 'POST'
