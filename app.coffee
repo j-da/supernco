@@ -560,10 +560,10 @@ hapi.register require('inert'), (e) ->
         await neo.cypher query: '''
                                 MATCH (g:Group)
                                       OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
-                                      LIMIT 10
                                       WITH g.name AS group, sum(e.score) AS score
                                       RETURN group, score
                                       ORDER BY score DESC
+                                      LIMIT 10
                                 ''', defer error, result
         if error
           console.log 'WEB::dberror ' + error
