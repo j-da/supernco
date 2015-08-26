@@ -27,7 +27,7 @@ hapi.route
   handler: (req, reply) ->
     console.log "POINTS received #{JSON.stringify req.payload}"
 
-    if req.payload.token is process.env.SLACK_HOOK_TOKEN_POINTS
+    if req.payload.token is process.env.SLACK_HOOK_TOKEN_POINTS and req.payload.user_name isnt 'slackbot'
       # give name... score for activity
       if query = /^give ([a-z][a-z ]+(?:, ?[a-z][a-z ]+)*) (\d+) for (\w[\w ]+)/i.exec req.payload.text
         date = dateFormat.format new Date()
@@ -204,9 +204,9 @@ hapi.route
         else if auth.admin
           await neo.cypher {lean: true, query: '''
                                    MATCH ()-[e:Entry]-(a:Activity)
-                                   UNION
+                                   DELETE e, a
                                    MATCH (p:Person {inactive: true})
-                                   DELETE p, e, a
+                                   DELETE p
                             '''
                            }, defer error, result
 
@@ -223,7 +223,7 @@ hapi.route
       else
         console.log "POINTS::null NO REPLY"
     else
-      console.log "POINTS::null BAD_TOKEN"
+      console.log "POINTS::null BAD_TOKEN_OR_IGNORE"
 
 hapi.route
   method: 'POST',
@@ -231,7 +231,7 @@ hapi.route
   handler: (req, reply) ->
     console.log "WHOIS received #{JSON.stringify req.payload}"
 
-    if req.payload.token is process.env.SLACK_HOOK_TOKEN_WHOIS
+    if req.payload.token is process.env.SLACK_HOOK_TOKEN_WHOIS and req.payload.user_name isnt 'slackbot'
       # add name... to group
       if query = /^add ([a-z][a-z ]+(?:, ?[a-z][a-z ]+)*) to ([a-z][a-z]+)/i.exec req.payload.text
         await authenticateAdmin req.payload.user_id, defer auth
@@ -388,7 +388,7 @@ hapi.route
       else
         console.log "WHOIS::null NO REPLY"
     else
-      console.log "WHOIS::null BAD_TOKEN"
+      console.log "WHOIS::null BAD_TOKEN_OR_IGNORE"
 
 hapi.route
   method: 'POST',
@@ -396,7 +396,7 @@ hapi.route
   handler: (req, reply) ->
     console.log "REPORTBOOK received #{JSON.stringify req.payload}"
 
-    if req.payload.token is process.env.SLACK_HOOK_TOKEN_REPORTBOOK
+    if req.payload.token is process.env.SLACK_HOOK_TOKEN_REPORTBOOK and req.payload.user_name isnt 'slackbot'
       # list assigned
       if req.payload.text.toLowerCase() is 'list assigned'
         await neo.cypher {lean: true, query: '''
@@ -553,7 +553,7 @@ hapi.route
       else
         console.log "REPORTBOOK::null NO REPLY"
     else
-      console.log "REPORTBOOK::null BAD_TOKEN"
+      console.log "REPORTBOOK::null BAD_TOKEN_OR_IGNORE"
 
 hapi.register require('inert'), (e) ->
   if e then console.log 'WEB::error' + e
