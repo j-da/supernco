@@ -62,7 +62,9 @@ hapi.route
         builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records added"
         
         erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
-        if erroneous then builder += " although there were errors adding scores for *#{erroneous}*"
+        if erroneous
+          builder += " although there were errors adding scores for *#{erroneous}*"
+          console.log 'POINTS::give1::error ' + errors.join '\n'
 
         missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
         if missing then builder += ", but I don't know who *#{missing}* are"
@@ -106,7 +108,9 @@ hapi.route
         builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records added"
         
         erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
-        if erroneous then builder += " although there were errors adding scores for *#{erroneous}*"
+        if erroneous
+          builder += " although there were errors adding scores for *#{erroneous}*"
+          console.log 'POINTS::give2::error ' + errors.join '\n'
 
         missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
         if missing then builder += ", but I don't know who *#{missing}* are"
@@ -139,6 +143,7 @@ hapi.route
 
         if error
           builder = "<@#{req.payload.user_name}>, there was an error getting a leaderboard for you: #{error}"
+          console.log 'POINTS::leaderboard::error ' + error
         else
           builder = "<@#{req.payload.user_name}>, I've fetched the leaderboard #{('for ' + group[0]) if group}> for you: \n" +
                     result.reduce ((p, c, i, a) -> if p is ''
@@ -182,6 +187,7 @@ hapi.route
 
         if error
           builder = "<@#{req.payload.user_name}>, there was an error getting a list for #{query[1]} for you: #{error}"
+          console.log 'POINTS::list::error ' + error
         else
           builder = "<@#{req.payload.user_name}>, I've fetched a list for #{query[1]} for you: " +
                     result.reduce ((p, c, i, a) -> "\n*#{c.person}* (#{c.group}) did *#{c.activity}* for *#{c.score}* on #{c.date} (#{c.author}#{(' & ' + verify) if verify}#{(', needs verification from ' + assigned) if assigned})"), ''
@@ -206,6 +212,7 @@ hapi.route
 
           if error
             builder = "<@#{req.payload.user_name}>, there was an error resetting for you: #{error}."
+            console.log 'POINTS::reset::error ' + error
           else
             builder = "<@#{req.payload.user_name}>, everything has been reset."
         else
@@ -251,7 +258,9 @@ hapi.route
           builder += "*#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}* records added"
           
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if erroneous then builder += " although there were errors adding *#{erroneous}*"
+          if erroneous
+            builder += " although there were errors adding *#{erroneous}*"
+            console.log 'WHOIS::add::error ' + errors.join '\n'
         else
           builder = "<@#{req.payload.user_name}>, it looks like you can't instigate an addition"
 
@@ -286,7 +295,9 @@ hapi.route
           builder += "*#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}* records changed"
           
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if erroneous then builder += " although there were errors moving *#{erroneous}*"
+          if erroneous
+            builder += " although there were errors moving *#{erroneous}*"
+            console.log 'WHOIS::move::error ' + errors.join '\n'
 
           missing = result.reduce ((p, c, i, a) -> if not c.p then (if p is '' then people[i] else p + ", #{people[i]}")), ''
           if missing then builder += ", but I don't know who *#{missing}* are"
@@ -323,7 +334,9 @@ hapi.route
           builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records changed"
             
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if erroneous then builder += " although there were errors moving *#{erroneous}*"
+          if erroneous
+            builder += " although there were errors moving *#{erroneous}*"
+            console.log 'WHOIS::left::error ' + errors.join '\n'
 
           missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then people[i] else p + ", #{people[i]}")), ''
           if missing then builder += ", but I don't know who *#{missing}* are"
@@ -344,6 +357,7 @@ hapi.route
                          }}, defer error, results
         if error
           builder = "<@#{req.payload.user_name}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
+          console.log 'WHOIS::in::error ' + error
         else
           people = results.reduce ((p, c, i, a) -> if p is '' then "*#{c}*" else if i is a.length - 1 then "#{p} and *#{c}*" else "#{p}, *#{c}*"), ''
           builder = "<@#{req.payload.user_name}>, #{people} are in #{query[1].trim().toLowerCase()}."
@@ -363,6 +377,7 @@ hapi.route
 
         if error
           builder = "<@#{req.payload.user_name}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
+          console.log 'WHOIS::whois::error ' + error
         else if result.g2
           builder = "<@#{req.payload.user_name}>, *#{result.p.name}* #{if result.p.inactive then 'was' else 'is'} in *#{result.g2}*."
         else
@@ -394,6 +409,7 @@ hapi.route
 
         if error
           builder = "<@#{req.payload.user_name}>, there was an error fetching your assignments: #{error}."
+          console.log 'REPORTBOOK::assigned::error ' + error
         else if results.length > 0
           builder = "<@#{req.payload.user_name}>, here's your assignments: " +
                     result.reduce ((p, c, i, a) -> "\n*#{c.uid}*:\u2002*#{c.person}* (#{c.group}) did *#{c.activity}* on #{c.date} (#{c.author})"), ''
@@ -419,6 +435,7 @@ hapi.route
 
         if error
           builder = "<@#{req.payload.user_name}>, there was an error fetching reports about #{query[1].trim().toLowerCase()}: #{error}"
+          console.log 'REPORTBOOK::list::error ' + error
         else if results.length > 0
           builder = "<@#{req.payload.user_name}>, here's the reports about #{query[1].trim().toLowerCase()}: " +
                     result.reduce ((p, c, i, a) -> "\n*#{c.uid}*:\u2002*#{c.person}* (#{c.group}) did *#{c.activity}* on #{c.date} (#{c.author})"), ''
@@ -448,6 +465,7 @@ hapi.route
 
           if error
             builder = "<@#{req.payload.user_name}>, there was an error verifying report #{query[1]}: #{error}."
+          console.log 'REPORTBOOK::auth::error ' + error
           else if result.uid2
             builder = "<@#{req.payload.user_name}>, you have verified report #{result.uid2}."
           else
@@ -479,6 +497,7 @@ hapi.route
 
           if error
             builder = "<@#{req.payload.user_name}>, there was an error deleting report #{query[1]}: #{error}."
+          console.log 'REPORTBOOK::delete::error ' + error
           else if result.uid2
             builder = "<@#{req.payload.user_name}>, you have deleted report #{result.uid2}."
           else
@@ -522,6 +541,7 @@ hapi.route
 
         if error
           builder = "<@#{req.payload.user_name}>, there was an error creating your report for #{person}: #{error}."
+          console.log 'REPORTBOOK::do::error ' + error
         else if result.uid
           builder = "<@#{req.payload.user_name}>, you have created report #{result.uid2} for #{person}."
         else
