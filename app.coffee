@@ -7,15 +7,19 @@ dateFormat = new Intl.DateTimeFormat 'en-GB'
 hapi.connection port: process.env.PORT || 3000
 
 authenticateAdmin = (userID, cb) ->
-  query2 = {token: process.env.SLACK_API_TOKEN, user: userID}
-  valid = request {method: 'POST', url: 'https://slack.com/api/users.info', json: query2}, (err, res, body) ->
+  query2 = "token=#{process.env.SLACK_API_TOKEN}&user=#{userID}"
+  valid = request {method: 'POST', url: 'https://slack.com/api/users.info', headers: {'content-type': 'application/x-www-form-urlencoded'}, body: query2}, (err, res, body) ->
     console.log "AUTH::request #{userID} returned #{JSON.stringify body}"
-    if err or res.statusCode isnt 200
-      cb error: r2.error
-    else if body.user and body.user.is_admin
-      cb admin: true
+    if err
+      cb error: err
     else
-      cb admin: false
+      b2 = JSON.parse body
+      if not b2.ok
+        cb error: b2.error
+      else if b2.user and b2.user.is_admin
+        cb admin: true
+      else
+        cb admin: false
 
 hapi.route
   method: 'POST'
