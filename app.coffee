@@ -354,6 +354,7 @@ hapi.route
 
       # who is name
       else if query = /^who is ([a-z][a-z ]+)/i.exec req.payload.text
+        console.log "DEBUG::query #{query}"
         await neo.cypher query: '''
                                 MATCH (g:Group)--(p:Person {name: { name }})
                                 RETURN p, g.name AS g2
