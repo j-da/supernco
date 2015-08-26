@@ -128,8 +128,7 @@ hapi.route
                                    WITH p.name AS person, p.inactive AS inactive, g.name AS group, sum(e.score) AS score
                                    RETURN person, inactive, group, score
                                    ORDER BY score DESC
-                            ''',
-                            params: {
+                            ''', params: {
                               group: group[1].toLowerCase()
                            }}, defer error, result
         else
@@ -174,8 +173,7 @@ hapi.route
                                    MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry]--(a:Activity {activity: { name }})
                                    RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
                                           e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                            ''',
-                            params: {
+                            ''', params: {
                               name: query[1].toLowerCase()
                            }}, defer error, result
         else if query[2]
@@ -183,8 +181,7 @@ hapi.route
                                    MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry]--(a:Activity {date: { date }})
                                    RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
                                           e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                            ''',
-                            params: {
+                            ''', params: {
                               date: query[2]
                            }}, defer error, result
 
@@ -247,8 +244,7 @@ hapi.route
               neo.cypher {query: '''
                                  CREATE (g:Group {name: { group }})--(p:Person {name: { person }, inactive: false})
                                  RETURN p
-                          ''',
-                          params: {
+                          ''', params: {
                             group: group,
                             person: person.trim().toLowerCase()
                          }}, defer errors[i], result[i]
@@ -280,8 +276,7 @@ hapi.route
                                  DELETE r
                                  CREATE (:Group {name: { group }})--(p)
                                  RETURN p
-                          ''',
-                          params: {
+                          ''', params: {
                             group: group,
                             person: person.trim().toLowerCase()
                          }}, defer errors[i], result[i]
@@ -316,8 +311,7 @@ hapi.route
                                  WHERE ch = 1
                                  SET ch.inactive = true
                                  RETURN ch
-                          ''',
-                          params: {
+                          ''', params: {
                             person: person.trim().toLowerCase()
                          }}, defer errors[i], result[i]
 
@@ -341,8 +335,7 @@ hapi.route
         await neo.cypher {query: '''
                                  MATCH (g:Group {name: { group }})--(p:Person)
                                  RETURN p
-                          ''',
-                          params: {
+                          ''', params: {
                             group: query[1].trim().toLowerCase()
                          }}, defer error, results
         if error
@@ -360,8 +353,7 @@ hapi.route
         await neo.cypher {query: '''
                                  MATCH (g:Group)--(p:Person {name: { name }})
                                  RETURN p, g.name AS g2
-                          ''',
-                          params: {
+                          ''', params: {
                             name: query[1].trim().toLowerCase()
                          }}, defer error, result
 
@@ -392,8 +384,7 @@ hapi.route
                                  MATCH (g:Group)--(p:Person)-[e:Entry:ReportBookEntry {assigned: { u }}]-(a:Activity:ReportBook)
                                  RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                          ''',
-                          params: {
+                          ''', params: {
                             u: req.payload.user_id
                          }}, defer error, results
 
@@ -418,8 +409,7 @@ hapi.route
                                  MATCH (g:Group {name: { name }})--(p:Person)-[e:Entry:ReportBookEntry]-(a:Activity:ReportBook)
                                  RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                          ''',
-                          params: {
+                          ''', params: {
                             name: query[1].trim().toLowerCase()
                          }}, defer error, results
 
@@ -447,8 +437,7 @@ hapi.route
                                    SET e.verification = { u }
                                    REMOVE e.assigned
                                    RETURN e.uid AS uid2
-                            ''',
-                            params: {
+                            ''', params: {
                               u: req.payload.user_id,
                               uid: query[1]
                            }}, defer error, result
@@ -479,8 +468,7 @@ hapi.route
                                    MATCH (a:Activity)
                                    WHERE NOT (a)-[:Entry]-()
                                    DELETE a
-                            ''',
-                            params: {
+                            ''', params: {
                               u: req.payload.user_id,
                               uid: query[1]
                            }}, defer error, result
@@ -520,8 +508,7 @@ hapi.route
                                                                      assigned: { snco }}]-(:Activity:ReportBook {activity: { activity },
                                                                                                                 date: { date }})
                                  RETURN uid
-                          ''',
-                          params: {
+                          ''', params: {
                             person: person,
                             snco: snco,
                             activity: activity,
@@ -562,11 +549,11 @@ hapi.register require('inert'), (e) ->
       handler: (req, reply) ->
         await neo.cypher {query: '''
                                  MATCH (g:Group)
-                                       OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
-                                       WITH g.name AS group, sum(e.score) AS score
-                                       RETURN group, score
-                                       ORDER BY score DESC
-                                       LIMIT 10
+                                 OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
+                                 WITH g.name AS group, sum(e.score) AS score
+                                 RETURN group, score
+                                 ORDER BY score DESC
+                                 LIMIT 10
                           '''
                          }, defer error, result
         if error
