@@ -53,8 +53,7 @@ hapi.route
                                                    author: { author }}]-(:Activity {activity: { activity },
                                                                                    date: { date }})
                                RETURN ch
-                        ''', 
-                        params: {
+                        ''', params: {
                           activity: query[3].toLowerCase(),
                           author: req.payload.user_id,
                           date: date
@@ -98,8 +97,7 @@ hapi.route
                                                    author: { author }}]-(:Activity {activity: { activity },
                                                                                     date: { date }})
                                RETURN ch
-                        ''', 
-                        params: {
+                        ''', params: {
                           activity: activity,
                           author: req.payload.user_id,
                           date: date
