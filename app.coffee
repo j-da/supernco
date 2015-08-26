@@ -40,27 +40,27 @@ hapi.route
         people = query[1].split(',')
         await
           for person, i in people
-            neo.cypher query: '''
-                              MERGE (id:UniqueId)
-                              ON CREATE SET id.next = 1
-                              ON MATCH SET id.next = id.next + 1
-                              WITH id.next AS uid
-                              MATCH (p:Person {name: { person }, inactive: false})
-                              WITH uid, p, count(*) AS ch
-                              WHERE ch = 1
-                              CREATE (p)-[:Entry {uid: uid,
-                                                  score: { score },
-                                                  author: { author }}]-(:Activity {activity: { activity },
+            neo.cypher {query: '''
+                               MERGE (id:UniqueId)
+                               ON CREATE SET id.next = 1
+                               ON MATCH SET id.next = id.next + 1
+                               WITH id.next AS uid
+                               MATCH (p:Person {name: { person }, inactive: false})
+                               WITH uid, p, count(*) AS ch
+                               WHERE ch = 1
+                               CREATE (p)-[:Entry {uid: uid,
+                                                   score: { score },
+                                                   author: { author }}]-(:Activity {activity: { activity },
                                                                                    date: { date }})
-                              RETURN ch
-                              ''', 
-                       params: {
-                         activity: query[3].toLowerCase(),
-                         author: req.payload.user_id,
-                         date: date
-                         person: person.trim().toLowerCase(),
-                         score: query[2],
-                       }, defer errors[i], result[i]
+                               RETURN ch
+                               ''', 
+                        params: {
+                          activity: query[3].toLowerCase(),
+                          author: req.payload.user_id,
+                          date: date
+                          person: person.trim().toLowerCase(),
+                          score: query[2],
+                       }}, defer errors[i], result[i]
 
         builder = "<#{req.payload.user_id}>, I've added #{activity} for you. "
         builder += "**#{result.reduce((p, c, i, a) -> p + c.ch)}** records added"
@@ -85,27 +85,27 @@ hapi.route
 
         await
           for person, i in query by 2
-            neo.cypher query: '''
-                              MERGE (id:UniqueId)
-                              ON CREATE SET id.next = 1
-                              ON MATCH SET id.next = id.next + 1
-                              WITH id.next AS uid
-                              MATCH (p:Person {name: { person }, inactive: false})
-                              WITH uid, p, count(*) AS ch
-                              WHERE ch = 1
-                              CREATE (p)-[:Entry {uid: uid,
-                                                  score: { score },
-                                                  author: { author }}]-(:Activity {activity: { activity },
-                                                                                   date: { date }})
-                              RETURN ch
-                              ''', 
-                       params: {
-                         activity: activity,
-                         author: req.payload.user_id,
-                         date: date
-                         person: person.toLowerCase(),
-                         score: query[i+1]
-                       }, defer errors[i/2], result[i/2]
+            neo.cypher {query: '''
+                               MERGE (id:UniqueId)
+                               ON CREATE SET id.next = 1
+                               ON MATCH SET id.next = id.next + 1
+                               WITH id.next AS uid
+                               MATCH (p:Person {name: { person }, inactive: false})
+                               WITH uid, p, count(*) AS ch
+                               WHERE ch = 1
+                               CREATE (p)-[:Entry {uid: uid,
+                                                   score: { score },
+                                                   author: { author }}]-(:Activity {activity: { activity },
+                                                                                    date: { date }})
+                               RETURN ch
+                               ''', 
+                        params: {
+                          activity: activity,
+                          author: req.payload.user_id,
+                          date: date
+                          person: person.toLowerCase(),
+                          score: query[i+1]
+                       }}, defer errors[i/2], result[i/2]
 
         builder = "<#{req.payload.user_id}>, I've added #{activity} for you. "
         builder += "**#{result.reduce((p, c, i, a) -> p + c.ch)}** records added"
@@ -122,25 +122,26 @@ hapi.route
       # leaderboard [for group]
       else if 0 is req.payload.text.indexOf 'leaderboard'
         if group = /^leaderboard for ([a-z][a-z ]+)/i.exec req.payload.text
-          await neo.cypher query: '''
-                                  MATCH (g:Group {name: { group }})--(p:Person)
-                                  OPTIONAL MATCH (p:Person)-[e:Entry]-(:Activity)
-                                  WITH p.name AS person, p.inactive AS inactive, g.name AS group, sum(e.score) AS score
-                                  RETURN person, inactive, group, score
-                                  ORDER BY score DESC
-                                  ''',
-                           params: {
-                             group: group[1].toLowerCase()
-                           }, defer error, result
+          await neo.cypher {query: '''
+                                   MATCH (g:Group {name: { group }})--(p:Person)
+                                   OPTIONAL MATCH (p:Person)-[e:Entry]-(:Activity)
+                                   WITH p.name AS person, p.inactive AS inactive, g.name AS group, sum(e.score) AS score
+                                   RETURN person, inactive, group, score
+                                   ORDER BY score DESC
+                                   ''',
+                            params: {
+                              group: group[1].toLowerCase()
+                           }}, defer error, result
         else
-          await neo.cypher query: '''
-                                  MATCH (g:Group)--(p:Person)
-                                  OPTIONAL MATCH (p:Person)-[e:Entry]-(:Activity)
-                                  LIMIT 10
-                                  WITH p.name AS person, p.inactive AS inactive, g.name AS group, sum(e.score) AS score
-                                  RETURN person, inactive, group, score
-                                  ORDER BY score DESC
-                                  ''', defer error, result
+          await neo.cypher {query: '''
+                                   MATCH (g:Group)--(p:Person)
+                                   OPTIONAL MATCH (p:Person)-[e:Entry]-(:Activity)
+                                   LIMIT 10
+                                   WITH p.name AS person, p.inactive AS inactive, g.name AS group, sum(e.score) AS score
+                                   RETURN person, inactive, group, score
+                                   ORDER BY score DESC
+                                   '''
+                           }, defer error, result
 
         if error
           builder = "<#{req.payload.user_id}>, there was an error getting a leaderboard for you: #{error}"
@@ -157,35 +158,35 @@ hapi.route
       # list for name|group|activity|author|date...
       else if query = /^list for ([a-z][a-z ]+)|([0-3][0-9]-[0-1][0-9]-20[0-9][0-9])/i.exec req.payload.text
         if query[1]
-          await neo.cypher query: '''
-                                  MATCH (g:Group {name: { name }})--(p:Person {inactive: false})--[e:Entry]--(a:Activity)
-                                  RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
-                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                                  UNION
-                                  MATCH (g:Group)--(p:Person {name: { name }, inactive: false})--[e:Entry]--(a:Activity)
-                                  RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
-                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                                  UNION
-                                  MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry {author: { name }}]--(a:Activity)
-                                  RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
-                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                                  UNION
-                                  MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry]--(a:Activity {activity: { name }})
-                                  RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
-                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                                  ''',
-                           params: {
-                             name: query[1].toLowerCase()
-                           }, defer error, result
+          await neo.cypher {query: '''
+                                   MATCH (g:Group {name: { name }})--(p:Person {inactive: false})--[e:Entry]--(a:Activity)
+                                   RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
+                                          e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
+                                   UNION
+                                   MATCH (g:Group)--(p:Person {name: { name }, inactive: false})--[e:Entry]--(a:Activity)
+                                   RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
+                                          e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
+                                   UNION
+                                   MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry {author: { name }}]--(a:Activity)
+                                   RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
+                                          e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
+                                   UNION
+                                   MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry]--(a:Activity {activity: { name }})
+                                   RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
+                                          e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
+                                   ''',
+                            params: {
+                              name: query[1].toLowerCase()
+                           }}, defer error, result
         else if query[2]
-          await neo.cypher query: '''
-                                  MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry]--(a:Activity {date: { date }})
-                                  RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
-                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                                  ''',
-                           params: {
-                             date: query[2]
-                           }, defer error, result
+          await neo.cypher {query: '''
+                                   MATCH (g:Group)--(p:Person {inactive: false})--[e:Entry]--(a:Activity {date: { date }})
+                                   RETURN p.name AS person, g.name AS group, e.score AS score, e.assigned AS assigned,
+                                          e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
+                                   ''',
+                            params: {
+                              date: query[2]
+                           }}, defer error, result
 
         if error
           builder = "<#{req.payload.user_id}>, there was an error getting a list for #{query[1]} for you: #{error}"
@@ -203,12 +204,13 @@ hapi.route
         if auth.error
           builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}."
         else if auth.admin
-          await neo.cypher query: '''
-                                  MATCH ()-[e:Entry]-(a:Activity)
-                                  UNION
-                                  MATCH (p:Person {inactive: true})
-                                  DELETE p, e, a
-                                  ''', defer error, result
+          await neo.cypher {query: '''
+                                   MATCH ()-[e:Entry]-(a:Activity)
+                                   UNION
+                                   MATCH (p:Person {inactive: true})
+                                   DELETE p, e, a
+                                   '''
+                           }, defer error, result
 
           if error
             builder = "<#{req.payload.user_id}>, there was an error resetting for you: #{error}."
@@ -242,14 +244,14 @@ hapi.route
           group = query[2].toLowerCase()
           await
             for person, i in people
-              neo.cypher query: '''
-                                CREATE (g:Group {name: { group }})--(p:Person {name: { person }, inactive: false})
-                                RETURN p
-                                ''',
-                         params: {
-                           group: group,
-                           person: person.trim().toLowerCase()
-                         }, defer errors[i], result[i]
+              neo.cypher {query: '''
+                                 CREATE (g:Group {name: { group }})--(p:Person {name: { person }, inactive: false})
+                                 RETURN p
+                                 ''',
+                          params: {
+                            group: group,
+                            person: person.trim().toLowerCase()
+                         }}, defer errors[i], result[i]
 
           builder = "<#{req.payload.user_id}>, I've added people to #{group} for you. "
           builder += "**#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}** records added"
@@ -273,16 +275,16 @@ hapi.route
           group = query[2].toLowerCase()
           await
             for person, i in people
-              neo.cypher query: '''
-                                MATCH (:Group)-[r]-(p:Person {name: { person }, inactive: false})
-                                DELETE r
-                                CREATE (:Group {name: { group }})--(p)
-                                RETURN p
-                                ''',
-                         params: {
-                           group: group,
-                           person: person.trim().toLowerCase()
-                         }, defer errors[i], result[i]
+              neo.cypher {query: '''
+                                 MATCH (:Group)-[r]-(p:Person {name: { person }, inactive: false})
+                                 DELETE r
+                                 CREATE (:Group {name: { group }})--(p)
+                                 RETURN p
+                                 ''',
+                          params: {
+                            group: group,
+                            person: person.trim().toLowerCase()
+                         }}, defer errors[i], result[i]
 
           builder = "<#{req.payload.user_id}>, I've moved people to #{group} for you. "
           builder += "**#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}** records changed"
@@ -308,16 +310,16 @@ hapi.route
           people = query[1].split ','
           await 
             for person, i in people
-              neo.cypher query: '''
-                                MATCH (p:Person {name: { person }})
-                                WITH p, count(*) AS ch
-                                WHERE ch = 1
-                                SET ch.inactive = true
-                                RETURN ch
-                                ''',
-                         params: {
-                           person: person.trim().toLowerCase()
-                         }, defer errors[i], result[i]
+              neo.cypher {query: '''
+                                 MATCH (p:Person {name: { person }})
+                                 WITH p, count(*) AS ch
+                                 WHERE ch = 1
+                                 SET ch.inactive = true
+                                 RETURN ch
+                                 ''',
+                          params: {
+                            person: person.trim().toLowerCase()
+                         }}, defer errors[i], result[i]
 
           builder = "<#{req.payload.user_id}>, I've completed that update for you. "
           builder += "**#{result.reduce((p, c, i, a) -> p + c.ch)}** records changed"
@@ -336,13 +338,13 @@ hapi.route
 
       # who is in group
       else if query = /^who is in ([a-z][a-z]+)/i.exec(req.payload.text) or query = /list ([a-z][a-z]+)/i.exec req.payload.text
-        await neo.cypher query: '''
-                                MATCH (g:Group {name: { group }})--(p:Person)
-                                RETURN p
-                                ''',
-                         params: {
-                           group: query[1].trim().toLowerCase()
-                         }, defer error, results
+        await neo.cypher {query: '''
+                                 MATCH (g:Group {name: { group }})--(p:Person)
+                                 RETURN p
+                                 ''',
+                          params: {
+                            group: query[1].trim().toLowerCase()
+                         }}, defer error, results
         if error
           builder = "<#{req.payload.user_id}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
         else
@@ -355,13 +357,13 @@ hapi.route
       # who is name
       else if query = /^who is ([a-z][a-z ]+)/i.exec req.payload.text
         console.log "DEBUG::query #{query}"
-        await neo.cypher query: '''
-                                MATCH (g:Group)--(p:Person {name: { name }})
-                                RETURN p, g.name AS g2
-                                ''',
-                         params: {
-                           name: query[1].trim().toLowerCase()
-                         }, defer error, result
+        await neo.cypher {query: '''
+                                 MATCH (g:Group)--(p:Person {name: { name }})
+                                 RETURN p, g.name AS g2
+                                 ''',
+                          params: {
+                            name: query[1].trim().toLowerCase()
+                         }}, defer error, result
 
         if error
           builder = "<#{req.payload.user_id}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
@@ -386,14 +388,14 @@ hapi.route
     if req.payload.token is process.env.SLACK_HOOK_TOKEN_REPORTBOOK
       # list assigned
       if req.payload.text.toLowerCase() is 'list assigned'
-        await neo.cypher query: '''
-                                MATCH (g:Group)--(p:Person)-[e:Entry:ReportBookEntry {assigned: { u }}]-(a:Activity:ReportBook)
-                                RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
-                                       e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                                ''',
-                         params: {
-                           u: req.payload.user_id
-                         }, defer error, results
+        await neo.cypher {query: '''
+                                 MATCH (g:Group)--(p:Person)-[e:Entry:ReportBookEntry {assigned: { u }}]-(a:Activity:ReportBook)
+                                 RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
+                                        e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
+                                 ''',
+                          params: {
+                            u: req.payload.user_id
+                         }}, defer error, results
 
         if error
           builder = "<#{req.payload.user_id}>, there was an error fetching your assignments: #{error}."
@@ -408,18 +410,18 @@ hapi.route
 
       # list for person|group
       else if query = /^list for ([a-z][a-z ]+)/i.exec req.payload.text
-        await neo.cypher query: '''
-                                MATCH (g:Group)--(p:Person {name: { name }})-[e:Entry:ReportBookEntry]-(a:Activity:ReportBook)
-                                RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
-                                       e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                                UNION
-                                MATCH (g:Group {name: { name }})--(p:Person)-[e:Entry:ReportBookEntry]-(a:Activity:ReportBook)
-                                RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
-                                       e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
-                                ''',
-                         params: {
-                           name: query[1].trim().toLowerCase()
-                         }, defer error, results
+        await neo.cypher {query: '''
+                                 MATCH (g:Group)--(p:Person {name: { name }})-[e:Entry:ReportBookEntry]-(a:Activity:ReportBook)
+                                 RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
+                                        e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
+                                 UNION
+                                 MATCH (g:Group {name: { name }})--(p:Person)-[e:Entry:ReportBookEntry]-(a:Activity:ReportBook)
+                                 RETURN p.name AS person, g.name AS group, e.uid AS uid, e.assigned AS assigned,
+                                        e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
+                                 ''',
+                          params: {
+                            name: query[1].trim().toLowerCase()
+                         }}, defer error, results
 
         if error
           builder = "<#{req.payload.user_id}>, there was an error fetching reports about #{query[1].trim().toLowerCase()}: #{error}"
@@ -439,17 +441,17 @@ hapi.route
         if auth.error
           builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
-          await neo.cypher query: '''
-                                  MATCH (p:Person)-[e:Entry:ReportBookEntry {uid: { uid }}]-(a:Activity)
-                                  WHERE HAS (e.assigned)
-                                  SET e.verification = { u }
-                                  REMOVE e.assigned
-                                  RETURN e.uid AS uid2
-                                  ''',
-                           params: {
-                             u: req.payload.user_id,
-                             uid: query[1]
-                           }, defer error, result
+          await neo.cypher {query: '''
+                                   MATCH (p:Person)-[e:Entry:ReportBookEntry {uid: { uid }}]-(a:Activity)
+                                   WHERE HAS (e.assigned)
+                                   SET e.verification = { u }
+                                   REMOVE e.assigned
+                                   RETURN e.uid AS uid2
+                                   ''',
+                            params: {
+                              u: req.payload.user_id,
+                              uid: query[1]
+                           }}, defer error, result
 
           if error
             builder = "<#{req.payload.user_id}>, there was an error verifying report #{query[1]}: #{error}."
@@ -470,18 +472,18 @@ hapi.route
         if auth.error
           builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
-          await neo.cypher query: '''
-                                  MATCH ()-[e:Entry:ReportBookEntry {uid: { uid }}]-()
-                                  DELETE e
+          await neo.cypher {query: '''
+                                   MATCH ()-[e:Entry:ReportBookEntry {uid: { uid }}]-()
+                                   DELETE e
 
-                                  MATCH (a:Activity)
-                                  WHERE NOT (a)-[:Entry]-()
-                                  DELETE a
-                                  ''',
-                           params: {
-                             u: req.payload.user_id,
-                             uid: query[1]
-                           }, defer error, result
+                                   MATCH (a:Activity)
+                                   WHERE NOT (a)-[:Entry]-()
+                                   DELETE a
+                                   ''',
+                            params: {
+                              u: req.payload.user_id,
+                              uid: query[1]
+                           }}, defer error, result
 
           if error
             builder = "<#{req.payload.user_id}>, there was an error deleting report #{query[1]}: #{error}."
@@ -504,28 +506,28 @@ hapi.route
         person = query[1]
         activity = query[2]
 
-        await neo.cypher query: '''
-                                MERGE (id:UniqueId)
-                                ON CREATE SET id.next = 1
-                                ON MATCH SET id.next = id.next + 1
-                                WITH id.next AS uid
-                                MATCH (p:Person {name: { person }, inactive: false})
-                                WITH uid, p, count(*) AS ch
-                                WHERE ch = 1
-                                CREATE (p)-[:Entry:ReportBookEntry {uid: uid,
-                                                                    score: -50,
-                                                                    author: { author },
-                                                                    assigned: { snco }}]-(:Activity:ReportBook {activity: { activity },
-                                                                                                               date: { date }})
-                                RETURN uid
-                                ''',
-                         params: {
-                           person: person,
-                           snco: snco,
-                           activity: activity,
-                           date: date,
-                           author: req.payload.user_id
-                         }, defer error, result
+        await neo.cypher {query: '''
+                                 MERGE (id:UniqueId)
+                                 ON CREATE SET id.next = 1
+                                 ON MATCH SET id.next = id.next + 1
+                                 WITH id.next AS uid
+                                 MATCH (p:Person {name: { person }, inactive: false})
+                                 WITH uid, p, count(*) AS ch
+                                 WHERE ch = 1
+                                 CREATE (p)-[:Entry:ReportBookEntry {uid: uid,
+                                                                     score: -50,
+                                                                     author: { author },
+                                                                     assigned: { snco }}]-(:Activity:ReportBook {activity: { activity },
+                                                                                                                date: { date }})
+                                 RETURN uid
+                                 ''',
+                          params: {
+                            person: person,
+                            snco: snco,
+                            activity: activity,
+                            date: date,
+                            author: req.payload.user_id
+                         }}, defer error, result
 
         if error
           builder = "<#{req.payload.user_id}>, there was an error creating your report for #{person}: #{error}."
@@ -558,14 +560,15 @@ hapi.register require('inert'), (e) ->
       method: 'GET',
       path: '/',
       handler: (req, reply) ->
-        await neo.cypher query: '''
-                                MATCH (g:Group)
-                                      OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
-                                      WITH g.name AS group, sum(e.score) AS score
-                                      RETURN group, score
-                                      ORDER BY score DESC
-                                      LIMIT 10
-                                ''', defer error, result
+        await neo.cypher {query: '''
+                                 MATCH (g:Group)
+                                       OPTIONAL MATCH (g:Group)--(p:Person)-[e:Entry]-(:Activity)
+                                       WITH g.name AS group, sum(e.score) AS score
+                                       RETURN group, score
+                                       ORDER BY score DESC
+                                       LIMIT 10
+                                 '''
+                         }, defer error, result
         if error
           console.log 'WEB::dberror ' + error
         
