@@ -585,7 +585,7 @@ hapi.register require('inert'), (e) ->
         
         if result
           for r, i in result
-            r2 = (Math.random() * 96 + 128).toString 16
+            r2 = Math.floor(Math.random() * 96 + 128).toString 16
             result[i].color = '#' + r2 + r2 + r2
         
         console.log 'WEB returning ' + result
