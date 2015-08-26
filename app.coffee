@@ -147,9 +147,9 @@ hapi.route
         else
           builder = "<@#{req.payload.user_name}>, I've fetched the leaderboard #{('for ' + group[0]) if group}> for you: \n" +
                     result.reduce ((p, c, i, a) -> if p is ''
-                                                     "*c.person* (#{(c.group + ', ') if c.group}#{c.score})"
+                                                     "*#{c.person}* (#{(c.group + ', ') if c.group}#{c.score})"
                                                    else
-                                                     ', ' + "*c.person* (#{'left, ' if c.inactive}#{(c.group + ', ') if c.group}#{c.score})"), ''
+                                                     ', ' + "*#{c.person}* (#{'left, ' if c.inactive}#{(c.group + ', ') if c.group}#{c.score})"), ''
 
         console.log "POINTS::leaderboard REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -190,7 +190,7 @@ hapi.route
           console.log 'POINTS::list::error ' + error
         else
           builder = "<@#{req.payload.user_name}>, I've fetched a list for #{query[1]} for you: " +
-                    result.reduce ((p, c, i, a) -> "\n*#{c.person}* (#{c.group}) did *#{c.activity}* for *#{c.score}* on #{c.date} (#{c.author}#{(' & ' + verify) if verify}#{(', needs verification from ' + assigned) if assigned})"), ''
+                    result.reduce ((p, c, i, a) -> "\n*#{c.person}* (#{c.group}) did *#{c.activity}* for *#{c.score}* on #{c.date} (#{c.author}#{(' & ' + c.verify) if c.verify}#{(', needs verification from ' + c.assigned) if c.assigned})"), ''
 
         console.log "POINTS::list REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -248,7 +248,7 @@ hapi.route
             for person, i in people
               neo.cypher {lean: true, query: '''
                                  CREATE (g:Group {name: { group }})-[:MEMBER]->(p:Person {name: { person }, inactive: false})
-                                 RETURN p
+                                 RETURN p.name AS p
                           ''', params: {
                             group: group,
                             person: person.trim().toLowerCase()
@@ -285,7 +285,7 @@ hapi.route
                                  MATCH (:Group)-[r]-(p:Person {name: { person }, inactive: false})
                                  DELETE r
                                  CREATE (:Group {name: { group }})-[:MEMBER]->(p)
-                                 RETURN p
+                                 RETURN p.name AS p
                           ''', params: {
                             group: group,
                             person: person.trim().toLowerCase()
@@ -324,7 +324,7 @@ hapi.route
                                  MATCH (p:Person {name: { person }})
                                  WITH p, count(*) AS ch
                                  WHERE ch = 1
-                                 SET ch.inactive = true
+                                 SET p.inactive = true
                                  RETURN ch
                           ''', params: {
                             person: person.trim().toLowerCase()
@@ -351,15 +351,15 @@ hapi.route
       else if query = /^who is in ([a-z][a-z]+)/i.exec(req.payload.text) or query = /list ([a-z][a-z]+)/i.exec req.payload.text
         await neo.cypher {lean: true, query: '''
                                  MATCH (g:Group {name: { group }})--(p:Person)
-                                 RETURN p
+                                 RETURN p.name AS p
                           ''', params: {
                             group: query[1].trim().toLowerCase()
-                         }}, defer error, results
+                         }}, defer error, result
         if error
           builder = "<@#{req.payload.user_name}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
           console.log 'WHOIS::in::error ' + error
         else
-          people = results.reduce ((p, c, i, a) -> if p is '' then "*#{c}*" else if i is a.length - 1 then "#{p} and *#{c}*" else "#{p}, *#{c}*"), ''
+          people = result.reduce ((p, c, i, a) -> if p is '' then "*#{c.p}*" else if i is a.length - 1 then "#{p} and *#{c.p}*" else "#{p}, *#{c.p}*"), ''
           builder = "<@#{req.payload.user_name}>, #{people} are in #{query[1].trim().toLowerCase()}."
 
         console.log "WHOIS::in REPLYING #{builder}"
@@ -370,7 +370,7 @@ hapi.route
         console.log "DEBUG::query #{query}"
         await neo.cypher {lean: true, query: '''
                                  MATCH (g:Group)--(p:Person {name: { name }})
-                                 RETURN p, g.name AS g2
+                                 RETURN p.name AS name, p.inactive AS inactive, g.name AS g2
                           ''', params: {
                             name: query[1].trim().toLowerCase()
                          }}, defer error, result
@@ -379,7 +379,7 @@ hapi.route
           builder = "<@#{req.payload.user_name}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
           console.log 'WHOIS::whois::error ' + error
         else if result.g2
-          builder = "<@#{req.payload.user_name}>, *#{result.p.name}* #{if result.p.inactive then 'was' else 'is'} in *#{result.g2}*."
+          builder = "<@#{req.payload.user_name}>, *#{result.name}* #{if result.inactive then 'was' else 'is'} in *#{result.g2}*."
         else
           builder = "<@#{req.payload.user_name}>, *#{query[1].trim().toLowerCase()}* was not found."
 
@@ -405,12 +405,12 @@ hapi.route
                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
                           ''', params: {
                             u: req.payload.user_id
-                         }}, defer error, results
+                         }}, defer error, result
 
         if error
           builder = "<@#{req.payload.user_name}>, there was an error fetching your assignments: #{error}."
           console.log 'REPORTBOOK::assigned::error ' + error
-        else if results.length > 0
+        else if result.length > 0
           builder = "<@#{req.payload.user_name}>, here's your assignments: " +
                     result.reduce ((p, c, i, a) -> "\n*#{c.uid}*:\u2002*#{c.person}* (#{c.group}) did *#{c.activity}* on #{c.date} (#{c.author})"), ''
         else
@@ -431,12 +431,12 @@ hapi.route
                                         e.verification AS verify, e.author AS author, a.activity AS activity, a.date AS date
                           ''', params: {
                             name: query[1].trim().toLowerCase()
-                         }}, defer error, results
+                         }}, defer error, result
 
         if error
           builder = "<@#{req.payload.user_name}>, there was an error fetching reports about #{query[1].trim().toLowerCase()}: #{error}"
           console.log 'REPORTBOOK::list::error ' + error
-        else if results.length > 0
+        else if result.length > 0
           builder = "<@#{req.payload.user_name}>, here's the reports about #{query[1].trim().toLowerCase()}: " +
                     result.reduce ((p, c, i, a) -> "\n*#{c.uid}*:\u2002*#{c.person}* (#{c.group}) did *#{c.activity}* on #{c.date} (#{c.author})"), ''
         else
@@ -464,15 +464,15 @@ hapi.route
                            }}, defer error, result
 
           if error
-            builder = "<@#{req.payload.user_name}>, there was an error verifying report #{query[1]}: #{error}."
+            builder = "<@#{req.payload.user_name}>, there was an error authorising report #{query[1]}: #{error}."
             console.log 'REPORTBOOK::auth::error ' + error
           else if result.uid2
-            builder = "<@#{req.payload.user_name}>, you have verified report #{result.uid2}."
+            builder = "<@#{req.payload.user_name}>, you have authorised report #{result.uid2}."
           else
-            builder = "<@#{req.payload.user_name}>, report #{query[1]} either does not require verification, or could not be found."
+            builder = "<@#{req.payload.user_name}>, report #{query[1]} either does not require authorisation, or could not be found."
         
         else
-          builder = "<@#{req.payload.user_name}>, it looks like you can't verify reports."
+          builder = "<@#{req.payload.user_name}>, it looks like you can't authorise reports."
 
         console.log "REPORTBOOK::auth REPLYING #{builder}"
         reply({text: builder}).code(200)
