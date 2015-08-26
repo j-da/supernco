@@ -587,6 +587,7 @@ hapi.register require('inert'), (e) ->
           for r, i in result
             r2 = Math.floor(Math.random() * 96 + 128).toString 16
             result[i].color = '#' + r2 + r2 + r2
+            result[i].group = result[i].group.toUpperCase()
         
         console.log 'WEB returning ' + result
         reply.view 'index', error: error?, groups: result
