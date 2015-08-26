@@ -358,9 +358,9 @@ hapi.route
         if error
           builder = "<@#{req.payload.user_name}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
         else if result.g2
-          builder = "<@#{req.payload.user_name}>, *#{result.p.name}* #{if result.p.inactive then 'was' else 'is'} in *#{result.g2}*"
+          builder = "<@#{req.payload.user_name}>, *#{result.p.name}* #{if result.p.inactive then 'was' else 'is'} in *#{result.g2}*."
         else
-          builder = "<@#{req.payload.user_name}>, *#{query[1].trim().toLowerCase()}* was not found"
+          builder = "<@#{req.payload.user_name}>, *#{query[1].trim().toLowerCase()}* was not found."
 
         console.log "WHOIS::whois REPLYING #{builder}"
         reply({text: builder}).code(200)
