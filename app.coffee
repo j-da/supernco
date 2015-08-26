@@ -7,7 +7,7 @@ dateFormat = new Intl.DateTimeFormat 'en-GB'
 hapi.connection port: process.env.PORT || 3000
 
 authenticateAdmin = (userID, cb) ->
-  query2 = "token=#{process.env.SLACK_API_TOKEN}&user=#{req.payload.user_id}"
+  query2 = "token=#{process.env.SLACK_API_TOKEN}&user=#{userID}"
   valid = https.request method: 'POST', port: 80, hostname: 'slack.com', path: '/api/users.info',
                         headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': query2.length}, (res) ->
                           res.setEncoding 'utf-8'
@@ -61,14 +61,14 @@ hapi.route
                           score: query[2],
                        }}, defer errors[i], result[i]
 
-        builder = "<#{req.payload.user_id}>, I've added #{activity} for you. "
-        builder += "**#{result.reduce((p, c, i, a) -> p + c.ch)}** records added"
+        builder = "<@#{req.payload.user_name}>, I've added #{activity} for you. "
+        builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records added"
         
         erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
-        if erroneous then builder += " although there were errors adding scores for **#{erroneous}**"
+        if erroneous then builder += " although there were errors adding scores for *#{erroneous}*"
 
         missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
-        if missing then builder += ", but I don't know who **#{missing}** are"
+        if missing then builder += ", but I don't know who *#{missing}* are"
 
         console.log "POINTS::give1 REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -105,14 +105,14 @@ hapi.route
                           score: query[i+1]
                        }}, defer errors[i/2], result[i/2]
 
-        builder = "<#{req.payload.user_id}>, I've added #{activity} for you. "
-        builder += "**#{result.reduce((p, c, i, a) -> p + c.ch)}** records added"
+        builder = "<@#{req.payload.user_name}>, I've added #{activity} for you. "
+        builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records added"
         
         erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
-        if erroneous then builder += " although there were errors adding scores for **#{erroneous}**"
+        if erroneous then builder += " although there were errors adding scores for *#{erroneous}*"
 
         missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then query[i*2] else p + ", #{query[i*2]}")), ''
-        if missing then builder += ", but I don't know who **#{missing}** are"
+        if missing then builder += ", but I don't know who *#{missing}* are"
 
         console.log "POINTS::give2 REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -141,13 +141,13 @@ hapi.route
                            }, defer error, result
 
         if error
-          builder = "<#{req.payload.user_id}>, there was an error getting a leaderboard for you: #{error}"
+          builder = "<@#{req.payload.user_name}>, there was an error getting a leaderboard for you: #{error}"
         else
-          builder = "<#{req.payload.user_id}>, I've fetched the leaderboard #{('for ' + group[0]) if group}> for you: \n" +
+          builder = "<@#{req.payload.user_name}>, I've fetched the leaderboard #{('for ' + group[0]) if group}> for you: \n" +
                     result.reduce ((p, c, i, a) -> if p is ''
-                                                     "**c.person** (#{(c.group + ', ') if c.group}#{c.score})"
+                                                     "*c.person* (#{(c.group + ', ') if c.group}#{c.score})"
                                                    else
-                                                     ', ' + "**c.person** (#{'left, ' if c.inactive}#{(c.group + ', ') if c.group}#{c.score})"), ''
+                                                     ', ' + "*c.person* (#{'left, ' if c.inactive}#{(c.group + ', ') if c.group}#{c.score})"), ''
 
         console.log "POINTS::leaderboard REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -184,10 +184,10 @@ hapi.route
                            }}, defer error, result
 
         if error
-          builder = "<#{req.payload.user_id}>, there was an error getting a list for #{query[1]} for you: #{error}"
+          builder = "<@#{req.payload.user_name}>, there was an error getting a list for #{query[1]} for you: #{error}"
         else
-          builder = "<#{req.payload.user_id}>, I've fetched a list for #{query[1]} for you: " +
-                    result.reduce ((p, c, i, a) -> "\n**#{c.person}** (#{c.group}) did **#{c.activity}** for **#{c.score}** on #{c.date} (#{c.author}#{(' & ' + verify) if verify}#{(', needs verification from ' + assigned) if assigned})"), ''
+          builder = "<@#{req.payload.user_name}>, I've fetched a list for #{query[1]} for you: " +
+                    result.reduce ((p, c, i, a) -> "\n*#{c.person}* (#{c.group}) did *#{c.activity}* for *#{c.score}* on #{c.date} (#{c.author}#{(' & ' + verify) if verify}#{(', needs verification from ' + assigned) if assigned})"), ''
 
         console.log "POINTS::list REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -197,7 +197,7 @@ hapi.route
         await authenticateAdmin req.payload.user_id, defer auth
 
         if auth.error
-          builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}."
+          builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}."
         else if auth.admin
           await neo.cypher {query: '''
                                    MATCH ()-[e:Entry]-(a:Activity)
@@ -208,11 +208,11 @@ hapi.route
                            }, defer error, result
 
           if error
-            builder = "<#{req.payload.user_id}>, there was an error resetting for you: #{error}."
+            builder = "<@#{req.payload.user_name}>, there was an error resetting for you: #{error}."
           else
-            builder = "<#{req.payload.user_id}>, everything has been reset."
+            builder = "<@#{req.payload.user_name}>, everything has been reset."
         else
-            builder = "<#{req.payload.user_id}>, it looks like you can't instigate a reset."
+            builder = "<@#{req.payload.user_name}>, it looks like you can't instigate a reset."
 
         console.log "POINTS::reset REPLYING #{builder}"
         reply({text: builder}).code(200)
@@ -233,7 +233,7 @@ hapi.route
         await authenticateAdmin req.payload.user_id, defer auth
 
         if auth.error
-          builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}"
+          builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
           people = query[1].split ','
           group = query[2].toLowerCase()
@@ -247,13 +247,13 @@ hapi.route
                             person: person.trim().toLowerCase()
                          }}, defer errors[i], result[i]
 
-          builder = "<#{req.payload.user_id}>, I've added people to #{group} for you. "
-          builder += "**#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}** records added"
+          builder = "<@#{req.payload.user_name}>, I've added people to #{group} for you. "
+          builder += "*#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}* records added"
           
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if erroneous then builder += " although there were errors adding **#{erroneous}**"
+          if erroneous then builder += " although there were errors adding *#{erroneous}*"
         else
-          builder = "<#{req.payload.user_id}>, it looks like you can't instigate an addition"
+          builder = "<@#{req.payload.user_name}>, it looks like you can't instigate an addition"
 
         console.log "WHOIS::add REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -263,7 +263,7 @@ hapi.route
         await authenticateAdmin req.payload.user_id, defer auth
 
         if auth.error
-          builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}"
+          builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
           people = query[1].split ','
           group = query[2].toLowerCase()
@@ -279,16 +279,16 @@ hapi.route
                             person: person.trim().toLowerCase()
                          }}, defer errors[i], result[i]
 
-          builder = "<#{req.payload.user_id}>, I've moved people to #{group} for you. "
-          builder += "**#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}** records changed"
+          builder = "<@#{req.payload.user_name}>, I've moved people to #{group} for you. "
+          builder += "*#{result.reduce((p, c, i, a) -> p + (if c.p then 1 else 0))}* records changed"
           
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if erroneous then builder += " although there were errors moving **#{erroneous}**"
+          if erroneous then builder += " although there were errors moving *#{erroneous}*"
 
           missing = result.reduce ((p, c, i, a) -> if not c.p then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if missing then builder += ", but I don't know who **#{missing}** are"
+          if missing then builder += ", but I don't know who *#{missing}* are"
         else
-          builder = "<#{req.payload.user_id}>, it looks like you can't instigate a move"
+          builder = "<@#{req.payload.user_name}>, it looks like you can't instigate a move"
 
         console.log "WHOIS::move REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -298,7 +298,7 @@ hapi.route
         await authenticateAdmin req.payload.user_id, defer auth
 
         if auth.error
-          builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}"
+          builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
           people = query[1].split ','
           await 
@@ -313,17 +313,17 @@ hapi.route
                             person: person.trim().toLowerCase()
                          }}, defer errors[i], result[i]
 
-          builder = "<#{req.payload.user_id}>, I've completed that update for you. "
-          builder += "**#{result.reduce((p, c, i, a) -> p + c.ch)}** records changed"
+          builder = "<@#{req.payload.user_name}>, I've completed that update for you. "
+          builder += "*#{result.reduce((p, c, i, a) -> p + c.ch)}* records changed"
             
           erroneous = errors.reduce ((p, c, i, a) -> if c then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if erroneous then builder += " although there were errors moving **#{erroneous}**"
+          if erroneous then builder += " although there were errors moving *#{erroneous}*"
 
           missing = result.reduce ((p, c, i, a) -> if not c.ch then (if p is '' then people[i] else p + ", #{people[i]}")), ''
-          if missing then builder += ", but I don't know who **#{missing}** are"
+          if missing then builder += ", but I don't know who *#{missing}* are"
 
         else
-          builder = "<#{req.payload.user_id}>, it looks like you can't instigate an update"
+          builder = "<@#{req.payload.user_name}>, it looks like you can't instigate an update"
 
         console.log "WHOIS::left REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -337,10 +337,10 @@ hapi.route
                             group: query[1].trim().toLowerCase()
                          }}, defer error, results
         if error
-          builder = "<#{req.payload.user_id}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
+          builder = "<@#{req.payload.user_name}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
         else
-          people = results.reduce ((p, c, i, a) -> if p is '' then "**#{c}**" else if i is a.length - 1 then "#{p} and **#{c}**" else "#{p}, **#{c}**"), ''
-          builder = "<#{req.payload.user_id}>, #{people} are in #{query[1].trim().toLowerCase()}."
+          people = results.reduce ((p, c, i, a) -> if p is '' then "*#{c}*" else if i is a.length - 1 then "#{p} and *#{c}*" else "#{p}, *#{c}*"), ''
+          builder = "<@#{req.payload.user_name}>, #{people} are in #{query[1].trim().toLowerCase()}."
 
         console.log "WHOIS::in REPLYING #{builder}"
         reply({text: builder}).code(200)
@@ -356,11 +356,11 @@ hapi.route
                          }}, defer error, result
 
         if error
-          builder = "<#{req.payload.user_id}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
+          builder = "<@#{req.payload.user_name}>, there was an error fetching #{query[1].trim().toLowerCase()} for you: #{error}."
         else if result.g2
-          builder = "<#{req.payload.user_id}>, **#{result.p.name}** #{if result.p.inactive then 'was' else 'is'} in **#{result.g2}**"
+          builder = "<@#{req.payload.user_name}>, *#{result.p.name}* #{if result.p.inactive then 'was' else 'is'} in *#{result.g2}*"
         else
-          builder = "<#{req.payload.user_id}>, **#{query[1].trim().toLowerCase()}** was not found"
+          builder = "<@#{req.payload.user_name}>, *#{query[1].trim().toLowerCase()}* was not found"
 
         console.log "WHOIS::whois REPLYING #{builder}"
         reply({text: builder}).code(200)
@@ -387,12 +387,12 @@ hapi.route
                          }}, defer error, results
 
         if error
-          builder = "<#{req.payload.user_id}>, there was an error fetching your assignments: #{error}."
+          builder = "<@#{req.payload.user_name}>, there was an error fetching your assignments: #{error}."
         else if results.length > 0
-          builder = "<#{req.payload.user_id}>, here's your assignments: " +
-                    result.reduce ((p, c, i, a) -> "\n**#{c.uid}**:\u2002**#{c.person}** (#{c.group}) did **#{c.activity}** on #{c.date} (#{c.author})"), ''
+          builder = "<@#{req.payload.user_name}>, here's your assignments: " +
+                    result.reduce ((p, c, i, a) -> "\n*#{c.uid}*:\u2002*#{c.person}* (#{c.group}) did *#{c.activity}* on #{c.date} (#{c.author})"), ''
         else
-          builder = "<#{req.payload.user_id}>, you have no assignments."
+          builder = "<@#{req.payload.user_name}>, you have no assignments."
 
         console.log "REPORTBOOK::assigned REPLYING #{builder}"
         reply({text: builder}).code(200)
@@ -412,12 +412,12 @@ hapi.route
                          }}, defer error, results
 
         if error
-          builder = "<#{req.payload.user_id}>, there was an error fetching reports about #{query[1].trim().toLowerCase()}: #{error}"
+          builder = "<@#{req.payload.user_name}>, there was an error fetching reports about #{query[1].trim().toLowerCase()}: #{error}"
         else if results.length > 0
-          builder = "<#{req.payload.user_id}>, here's the reports about #{query[1].trim().toLowerCase()}: " +
-                    result.reduce ((p, c, i, a) -> "\n**#{c.uid}**:\u2002**#{c.person}** (#{c.group}) did **#{c.activity}** on #{c.date} (#{c.author})"), ''
+          builder = "<@#{req.payload.user_name}>, here's the reports about #{query[1].trim().toLowerCase()}: " +
+                    result.reduce ((p, c, i, a) -> "\n*#{c.uid}*:\u2002*#{c.person}* (#{c.group}) did *#{c.activity}* on #{c.date} (#{c.author})"), ''
         else
-          builder = "<#{req.payload.user_id}>, there are no reports for #{query[1].trim().toLowerCase()}"
+          builder = "<@#{req.payload.user_name}>, there are no reports for #{query[1].trim().toLowerCase()}"
 
         console.log "REPORTBOOK::list REPLYING #{builder + '.'}"
         reply({text: builder + '.'}).code(200)
@@ -427,7 +427,7 @@ hapi.route
         await authenticateAdmin req.payload.user_id, defer auth
 
         if auth.error
-          builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}"
+          builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
           await neo.cypher {query: '''
                                    MATCH (p:Person)-[e:Entry:ReportBookEntry {uid: { uid }}]-(a:Activity)
@@ -441,14 +441,14 @@ hapi.route
                            }}, defer error, result
 
           if error
-            builder = "<#{req.payload.user_id}>, there was an error verifying report #{query[1]}: #{error}."
+            builder = "<@#{req.payload.user_name}>, there was an error verifying report #{query[1]}: #{error}."
           else if result.uid2
-            builder = "<#{req.payload.user_id}>, you have verified report #{result.uid2}."
+            builder = "<@#{req.payload.user_name}>, you have verified report #{result.uid2}."
           else
-            builder = "<#{req.payload.user_id}>, report #{query[1]} either does not require verification, or could not be found."
+            builder = "<@#{req.payload.user_name}>, report #{query[1]} either does not require verification, or could not be found."
         
         else
-          builder = "<#{req.payload.user_id}>, it looks like you can't verify reports."
+          builder = "<@#{req.payload.user_name}>, it looks like you can't verify reports."
 
         console.log "REPORTBOOK::auth REPLYING #{builder}"
         reply({text: builder}).code(200)
@@ -457,7 +457,7 @@ hapi.route
         await authenticateAdmin req.payload.user_id, defer auth
 
         if auth.error
-          builder = "<#{req.payload.user_id}>, there was an error authenticating you: #{auth.error}"
+          builder = "<@#{req.payload.user_name}>, there was an error authenticating you: #{auth.error}"
         else if auth.admin
           await neo.cypher {query: '''
                                    MATCH ()-[e:Entry:ReportBookEntry {uid: { uid }}]-()
@@ -472,14 +472,14 @@ hapi.route
                            }}, defer error, result
 
           if error
-            builder = "<#{req.payload.user_id}>, there was an error deleting report #{query[1]}: #{error}."
+            builder = "<@#{req.payload.user_name}>, there was an error deleting report #{query[1]}: #{error}."
           else if result.uid2
-            builder = "<#{req.payload.user_id}>, you have deleted report #{result.uid2}."
+            builder = "<@#{req.payload.user_name}>, you have deleted report #{result.uid2}."
           else
-            builder = "<#{req.payload.user_id}>, report #{query[1]} could not be found."
+            builder = "<@#{req.payload.user_name}>, report #{query[1]} could not be found."
         
         else
-          builder = "<#{req.payload.user_id}>, it looks like you can't delete reports."
+          builder = "<@#{req.payload.user_name}>, it looks like you can't delete reports."
 
         console.log "REPORTBOOK::delete REPLYING #{builder}"
         reply({text: builder}).code(200)
@@ -515,11 +515,11 @@ hapi.route
                          }}, defer error, result
 
         if error
-          builder = "<#{req.payload.user_id}>, there was an error creating your report for #{person}: #{error}."
+          builder = "<@#{req.payload.user_name}>, there was an error creating your report for #{person}: #{error}."
         else if result.uid
-          builder = "<#{req.payload.user_id}>, you have created report #{result.uid2} for #{person}."
+          builder = "<@#{req.payload.user_name}>, you have created report #{result.uid2} for #{person}."
         else
-          builder = "<#{req.payload.user_id}>, your report for #{person} does not appear to have been created."
+          builder = "<@#{req.payload.user_name}>, your report for #{person} does not appear to have been created."
 
         console.log "REPORTBOOK::do REPLYING #{builder}"
         reply({text: builder}).code(200)
