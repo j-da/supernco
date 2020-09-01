@@ -5,7 +5,7 @@
   "main": "app.coffee",
   "dependencies": {
     "handlebars": "^4.0.0",
-    "hapi": "^9.0.3",
+    "hapi": "^18.1.0",
     "iced-coffee-script": "^108.0.7",
     "inert": "^3.0.1",
     "neo4j": "^2.0.0-RC2",
